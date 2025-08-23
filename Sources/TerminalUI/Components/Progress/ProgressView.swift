@@ -22,7 +22,7 @@ public struct ProgressView: ConsoleView {
     }
     
     public func _makeNode(context: inout RenderContext) -> Node {
-        let id = context.makeNodeID(for: "progress")
+        let address = context.makeAddress(for: "progress")
         
         var properties = PropertyContainer()
             .with(.tint, value: String(describing: tint))
@@ -46,10 +46,11 @@ public struct ProgressView: ConsoleView {
         }
         
         return Node(
-            id: id,
+            address: address,
+            logicalID: nil,
             kind: .progress,
             properties: properties,
-            parentID: context.currentParent
+            parentAddress: context.currentParent
         )
     }
 }
@@ -66,4 +67,8 @@ public extension ProgressView {
         copy.showPercentage = show
         return copy
     }
+    public var body: Never {
+        fatalError("ProgressView is a primitive view")
+    }
+
 }

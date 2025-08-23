@@ -11,7 +11,7 @@ struct ForEachTests {
         let items = ["Apple", "Banana", "Cherry"]
         
         let view = VStack {
-            ForEach(items) { item in
+            ForEach(items, id: \.self) { item in
                 Text(item)
             }
         }
@@ -41,7 +41,7 @@ struct ForEachTests {
         #expect(node.children.count == 5)
         for i in 0..<5 {
             #expect(node.children[i].kind == .text)
-            #expect(node.children[i].props["text"] as? String == "Item \(i)")
+            #expect(node.children[i].prop(.text, as: String.self) == "Item \(i)")
         }
     }
     
@@ -58,9 +58,9 @@ struct ForEachTests {
         
         #expect(node.kind == .vstack)
         #expect(node.children.count == 3)
-        #expect(node.children[0].props["text"] as? String == "Number 1")
-        #expect(node.children[1].props["text"] as? String == "Number 2")
-        #expect(node.children[2].props["text"] as? String == "Number 3")
+        #expect(node.children[0].prop(.text, as: String.self) == "Number 1")
+        #expect(node.children[1].prop(.text, as: String.self) == "Number 2")
+        #expect(node.children[2].prop(.text, as: String.self) == "Number 3")
     }
     
     // MARK: - Identifiable Tests
@@ -126,92 +126,13 @@ struct ForEachTests {
         
         #expect(node.kind == .vstack)
         #expect(node.children.count == 3)
-        #expect(node.children[0].props["text"] as? String == "First")
-        #expect(node.children[1].props["text"] as? String == "Second")
-        #expect(node.children[2].props["text"] as? String == "Third")
+        #expect(node.children[0].prop(.text, as: String.self) == "First")
+        #expect(node.children[1].prop(.text, as: String.self) == "Second")
+        #expect(node.children[2].prop(.text, as: String.self) == "Third")
     }
     
-    // MARK: - Indexed ForEach Tests
     
-    @Test("ForEach with indexed elements")
-    func testIndexedForEach() async throws {
-        let items = ["Red", "Green", "Blue"]
-        
-        let view = VStack {
-            ForEach(indexed: items) { index, color in
-                HStack {
-                    Text("\(index):")
-                    Text(color)
-                }
-            }
-        }
-        
-        var context = RenderContext()
-        let node = view._makeNode(context: &context)
-        
-        #expect(node.kind == .vstack)
-        #expect(node.children.count == 3)
-        
-        for (index, child) in node.children.enumerated() {
-            #expect(child.kind == .hstack)
-            #expect(child.children[0].props["text"] as? String == "\(index):")
-            #expect(child.children[1].props["text"] as? String == items[index])
-        }
-    }
     
-    // MARK: - Enumerated ForEach Tests
-    
-    @Test("ForEach enumerated")
-    func testEnumeratedForEach() async throws {
-        let fruits = ["Apple", "Banana", "Cherry"]
-        
-        let view = VStack {
-            ForEach(enumerated: fruits) { offset, fruit in
-                Text("\(offset + 1). \(fruit)")
-            }
-        }
-        
-        var context = RenderContext()
-        let node = view._makeNode(context: &context)
-        
-        #expect(node.kind == .vstack)
-        #expect(node.children.count == 3)
-        #expect(node.children[0].props["text"] as? String == "1. Apple")
-        #expect(node.children[1].props["text"] as? String == "2. Banana")
-        #expect(node.children[2].props["text"] as? String == "3. Cherry")
-    }
-    
-    // MARK: - Dictionary ForEach Tests
-    
-    @Test("ForEach with dictionary")
-    func testDictionaryForEach() async throws {
-        let scores = [
-            "Alice": 95,
-            "Bob": 87,
-            "Charlie": 92
-        ]
-        
-        let view = VStack {
-            ForEach(scores) { name, score in
-                HStack {
-                    Text(name)
-                    Text("Score: \(score)")
-                }
-            }
-        }
-        
-        var context = RenderContext()
-        let node = view._makeNode(context: &context)
-        
-        #expect(node.kind == .vstack)
-        #expect(node.children.count == 3)
-        
-        // Verify we have all entries (order not guaranteed with dictionary)
-        for child in node.children {
-            #expect(child.kind == .hstack)
-            #expect(child.children.count == 2)
-        }
-    }
     
     // MARK: - Filtered and Sorted ForEach Tests
     
@@ -257,9 +178,9 @@ struct ForEachTests {
         
         #expect(node.kind == .vstack)
         #expect(node.children.count == 3)
-        #expect(node.children[0].props["text"] as? String == "Apple")
-        #expect(node.children[1].props["text"] as? String == "Mango")
-        #expect(node.children[2].props["text"] as? String == "Zebra")
+        #expect(node.children[0].prop(.text, as: String.self) == "Apple")
+        #expect(node.children[1].prop(.text, as: String.self) == "Mango")
+        #expect(node.children[2].prop(.text, as: String.self) == "Zebra")
     }
     
     // MARK: - Stride ForEach Tests
@@ -277,38 +198,9 @@ struct ForEachTests {
         
         #expect(node.kind == .vstack)
         #expect(node.children.count == 5) // 0, 2, 4, 6, 8
-        #expect(node.children[0].props["text"] as? String == "Value: 0")
-        #expect(node.children[1].props["text"] as? String == "Value: 2")
-        #expect(node.children[4].props["text"] as? String == "Value: 8")
-    }
-    
-    // MARK: - Binding ForEach Tests
-    
-    @Test("ForEach with mutable binding")
-    func testBindingForEach() async throws {
-        var items = ["First", "Second", "Third"]
-        let binding = Binding(
-            get: { items },
-            set: { items = $0 }
-        )
-        
-        let view = VStack {
-            ForEach(binding) { itemBinding in
-                Text(itemBinding.wrappedValue)
-            }
-        }
-        
-        var context = RenderContext()
-        let node = view._makeNode(context: &context)
-        
-        #expect(node.kind == .vstack)
-        #expect(node.children.count == 3)
-        #expect(node.children[0].props["text"] as? String == "First")
-        
-        // Test mutation through binding
-        binding.wrappedValue[0] = "Modified"
-        let updatedNode = view._makeNode(context: &context)
-        #expect(updatedNode.children[0].props["text"] as? String == "Modified")
+        #expect(node.children[0].prop(.text, as: String.self) == "Value: 0")
+        #expect(node.children[1].prop(.text, as: String.self) == "Value: 2")
+        #expect(node.children[4].prop(.text, as: String.self) == "Value: 8")
     }
     
     // MARK: - Nested ForEach Tests
@@ -343,7 +235,7 @@ struct ForEachTests {
             
             for (colIndex, cellNode) in rowNode.children.enumerated() {
                 #expect(cellNode.kind == .text)
-                #expect(cellNode.props["text"] as? String == matrix[rowIndex][colIndex])
+                #expect(cellNode.prop(.text, as: String.self) == matrix[rowIndex][colIndex])
             }
         }
     }

@@ -24,9 +24,11 @@ public struct Spinner: ConsoleView {
             .with(.color, value: color?.toHex() ?? "")
         
         return Node(
-            id: context.makeNodeID(), 
+            address: context.makeAddress(for: "spinner"),
+            logicalID: nil,
             kind: .spinner,
-            properties: properties
+            properties: properties,
+            parentAddress: context.currentParent
         )
     }
 }
@@ -95,4 +97,8 @@ public extension Spinner {
     static func syncing(_ label: String? = "Syncing...") -> Spinner {
         Spinner(label, style: .arc)
     }
+    public var body: Never {
+        fatalError("Spinner is a primitive view")
+    }
+
 }

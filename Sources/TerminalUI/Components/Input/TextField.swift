@@ -162,7 +162,13 @@ public struct TextField: @preconcurrency ConsoleView {
             properties = properties.with(maxLengthKey, value: maxLength)
         }
         
-        return Node(id: context.makeNodeID(), kind: .textfield, properties: properties)
+        return Node(
+            address: context.makeAddress(for: "textfield"),
+            logicalID: nil,
+            kind: .textfield,
+            properties: properties,
+            parentAddress: context.currentParent
+        )
     }
     
     public var body: Never {

@@ -44,6 +44,80 @@ public struct ShimmerEffect: Sendable {
     )
 }
 
+public struct ShimmerEffectView: ConsoleView {
+    private let content: AnyConsoleView
+    private let effect: ShimmerEffect
+    private let isActive: Bool
+    
+    public init<Content: ConsoleView>(
+        effect: ShimmerEffect = .defaultShimmer,
+        isActive: Bool = true,
+        @ConsoleBuilder content: () -> Content
+    ) {
+        self.content = AnyConsoleView(content())
+        self.effect = effect
+        self.isActive = isActive
+    }
+    
+    public func _makeNode(context: inout RenderContext) -> Node {
+        var node = content._makeNode(context: &context)
+        
+        if isActive {
+            let shimmerKey = PropertyContainer.Key<Bool>("shimmer")
+            let shimmerEffectKey = PropertyContainer.Key<ShimmerEffect>("shimmerEffect")
+            let shimmerFrameKey = PropertyContainer.Key<Int>("shimmerFrame")
+            
+            node = node.with(properties: node.properties
+                .with(shimmerKey, value: true)
+                .with(shimmerEffectKey, value: effect)
+                .with(shimmerFrameKey, value: context.frame)
+            )
+        }
+        
+        return node
+    }
+    
+    public var body: Never {
+        fatalError("ShimmerEffectView is a modifier")
+    }
+}
+
+public extension ConsoleView {
+    func shimmer(
+        baseColor: ANSIColor = .semantic(.primary),
+        highlightColor: ANSIColor = .semantic(.accent),
+        duration: TimeInterval = 2.0,
+        direction: ShimmerEffect.Direction = .leftToRight,
+        width: Double = 0.3,
+        isActive: Bool = true
+    ) -> some ConsoleView {
+        ShimmerEffectView(
+            effect: ShimmerEffect(
+                baseColor: baseColor,
+                highlightColor: highlightColor,
+                duration: duration,
+                direction: direction,
+                width: width
+            ),
+            isActive: isActive
+        ) {
+            self
+        }
+    }
+    
+    func shimmer(
+        _ effect: ShimmerEffect = .defaultShimmer,
+        isActive: Bool = true
+    ) -> some ConsoleView {
+        ShimmerEffectView(
+            effect: effect,
+            isActive: isActive
+        ) {
+            self
+        }
+    }
+}
+
 public struct ShimmerAnimator: Sendable {
     private let scheduler = AnimationScheduler.shared
     private let runtime = TerminalRuntime.shared
@@ -52,10 +126,10 @@ public struct ShimmerAnimator: Sendable {
     
 
     public func startShimmer(
-        nodeID: NodeID,
+        address: Address,
         effect: ShimmerEffect
     ) async {
-        let animationID = AnimationScheduler.AnimationID("shimmer-\(nodeID.value)")
+        let animationID = AnimationScheduler.AnimationID("shimmer-\(address.raw)")
         
         await scheduler.animate(
             id: animationID,
@@ -69,7 +143,7 @@ public struct ShimmerAnimator: Sendable {
                 
 
                 let commands = Self.generateShimmerCommands(
-                    nodeID: nodeID,
+                    address: address,
                     effect: effect,
                     position: position
                 )
@@ -80,8 +154,8 @@ public struct ShimmerAnimator: Sendable {
     }
     
 
-    public func stopShimmer(nodeID: NodeID) async {
-        let animationID = AnimationScheduler.AnimationID("shimmer-\(nodeID.value)")
+    public func stopShimmer(address: Address) async {
+        let animationID = AnimationScheduler.AnimationID("shimmer-\(address.raw)")
         await scheduler.cancelAnimation(animationID)
         
 
@@ -105,7 +179,7 @@ public struct ShimmerAnimator: Sendable {
     
 
     static func generateShimmerCommands(
-        nodeID: NodeID,
+        address: Address,
         effect: ShimmerEffect,
         position: Double
     ) -> [RenderCommand] {

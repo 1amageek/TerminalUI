@@ -51,7 +51,7 @@ public struct KeyValue: ConsoleView {
         case .aligned(let width):
             width
         default:
-            pairs.map { $0.key.count }.max() ?? 0
+            pairs.map { $0.key.terminalWidth }.max() ?? 0
         }
         
         let kvPairs = pairs.map { KeyValuePair(key: $0.key, value: $0.value) }
@@ -65,7 +65,13 @@ public struct KeyValue: ConsoleView {
             .with(.background, value: valueColor?.toHex() ?? "")
             .with(.compact, value: compact)
         
-        return Node(id: context.makeNodeID(), kind: .keyvalue, properties: properties)
+        return Node(
+            address: context.makeAddress(for: "keyvalue"),
+            logicalID: nil,
+            kind: .keyvalue,
+            properties: properties,
+            parentAddress: context.currentParent
+        )
     }
     
     private func alignmentString(_ alignment: KeyValueAlignment) -> String {
@@ -74,6 +80,10 @@ public struct KeyValue: ConsoleView {
         case .aligned: return "aligned"
         case .vertical: return "vertical"
         }
+    }
+    
+    public var body: Never {
+        fatalError("KeyValue is a primitive view")
     }
 }
 

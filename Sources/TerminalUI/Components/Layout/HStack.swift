@@ -1,7 +1,7 @@
 import Foundation
 
-public struct HStack<Content: ConsoleView>: ConsoleView {
-    private let content: Content
+public struct HStack<Content: ConsoleView>: ContainerView {
+    public let content: Content
     private var spacing: Int = 0
     private var padding: Int = 0
     private var border: ANSIColor?
@@ -11,9 +11,11 @@ public struct HStack<Content: ConsoleView>: ConsoleView {
         self.content = content()
     }
     
-    public func _makeNode(context: inout RenderContext) -> Node {
-        let id = context.makeNodeID(for: "hstack")
-        
+    public var containerKind: NodeKind {
+        .hstack
+    }
+    
+    public func extraProperties() -> PropertyContainer {
         var properties = PropertyContainer()
         
         if spacing > 0 {
@@ -29,28 +31,7 @@ public struct HStack<Content: ConsoleView>: ConsoleView {
             properties = properties.with(.rounded, value: rounded)
         }
         
-
-        context.pushPath("hstack")
-        context.pushParent(id)
-        let childNode = content._makeNode(context: &context)
-        context.popParent()
-        context.popPath()
-        
-
-        let children: [Node]
-        if childNode.kind == .group {
-            children = childNode.children
-        } else {
-            children = [childNode]
-        }
-        
-        return Node(
-            id: id,
-            kind: .hstack,
-            children: children,
-            properties: properties,
-            parentID: context.currentParent
-        )
+        return properties
     }
 }
 

@@ -65,11 +65,11 @@ public struct BlinkAnimator {
     
 
     public func startBlink(
-        nodeID: NodeID,
+        address: Address,
         interval: TimeInterval,
         dutyCycle: Double
     ) async {
-        let animationID = AnimationScheduler.AnimationID("blink-\(nodeID.value)")
+        let animationID = AnimationScheduler.AnimationID("blink-\(address.raw)")
         
 
         let onDuration = interval * dutyCycle
@@ -78,7 +78,7 @@ public struct BlinkAnimator {
 
         await animateCycle(
             animationID: animationID,
-            nodeID: nodeID,
+            address: address,
             onDuration: onDuration,
             offDuration: offDuration
         )
@@ -86,7 +86,7 @@ public struct BlinkAnimator {
     
     private func animateCycle(
         animationID: AnimationScheduler.AnimationID,
-        nodeID: NodeID,
+        address: Address,
         onDuration: TimeInterval,
         offDuration: TimeInterval
     ) async {
@@ -102,8 +102,8 @@ public struct BlinkAnimator {
     }
     
 
-    public func stopBlink(nodeID: NodeID) async {
-        let animationID = AnimationScheduler.AnimationID("blink-\(nodeID.value)")
+    public func stopBlink(address: Address) async {
+        let animationID = AnimationScheduler.AnimationID("blink-\(address.raw)")
         await scheduler.cancelAnimation(animationID)
         
 
@@ -199,12 +199,12 @@ public struct FadeBlinkAnimator: Sendable {
     
 
     public func startFadeBlink(
-        nodeID: NodeID,
+        address: Address,
         duration: TimeInterval,
         minOpacity: Double,
         maxOpacity: Double
     ) async {
-        let animationID = AnimationScheduler.AnimationID("fade-blink-\(nodeID.value)")
+        let animationID = AnimationScheduler.AnimationID("fade-blink-\(address.raw)")
         
         await scheduler.animate(
             id: animationID,
@@ -218,7 +218,7 @@ public struct FadeBlinkAnimator: Sendable {
                 )
                 
                 let commands = generateOpacityCommands(
-                    nodeID: nodeID,
+                    address: address,
                     opacity: opacity
                 )
                 
@@ -234,7 +234,7 @@ public struct FadeBlinkAnimator: Sendable {
         return min + (max - min) * normalized
     }
     
-    private func generateOpacityCommands(nodeID: NodeID, opacity: Double) -> [RenderCommand] {
+    private func generateOpacityCommands(address: Address, opacity: Double) -> [RenderCommand] {
 
         if opacity < 0.5 {
             return [.setStyle(.dim)]

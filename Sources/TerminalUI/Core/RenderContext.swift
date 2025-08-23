@@ -1,31 +1,28 @@
 import Foundation
 
 public struct RenderContext: Sendable {
-
+    /// Terminal width in columns
     public let terminalWidth: Int
     
-
+    /// Terminal height in rows
     public let terminalHeight: Int
     
-
+    /// Terminal capabilities (colors, unicode, etc.)
     public let capabilities: Capabilities
     
-
+    /// Theme for styling
     public let theme: Theme
     
-
-    private var parentStack: [NodeID] = []
+    /// Stack of parent addresses for hierarchy tracking
+    private var parentStack: [Address] = []
     
-
-    private var nodeCounter: Int = 0
+    /// Current path components for address generation
+    internal private(set) var currentPath: [String] = []
     
-
-    private var currentPath: [String] = []
-    
-
+    /// Current animation frame
     public let frame: Int
     
-
+    /// Session configuration options
     public let options: SessionOptions
     
     public init(
@@ -44,36 +41,35 @@ public struct RenderContext: Sendable {
         self.options = options
     }
     
-
-    public mutating func makeNodeID(for type: String? = nil) -> NodeID {
-        nodeCounter += 1
+    /// Generate an address for the current position in the tree
+    public mutating func makeAddress(for type: String? = nil) -> Address {
         let pathString = currentPath.joined(separator: ".")
         let typeString = type ?? "node"
-        let id = "\(pathString).\(typeString).\(nodeCounter)"
-        return NodeID(id)
+        let addressString = pathString.isEmpty ? typeString : "\(pathString).\(typeString)"
+        return Address(addressString)
     }
     
-
+    /// Push a component to the current path
     public mutating func pushPath(_ component: String) {
         currentPath.append(component)
     }
     
-
+    /// Pop the last component from the current path
     public mutating func popPath() {
         _ = currentPath.popLast()
     }
     
-
-    public var currentParent: NodeID? {
+    /// Get the current parent's address
+    public var currentParent: Address? {
         parentStack.last
     }
     
-
-    public mutating func pushParent(_ id: NodeID) {
-        parentStack.append(id)
+    /// Push a parent address to the stack
+    public mutating func pushParent(_ address: Address) {
+        parentStack.append(address)
     }
     
-
+    /// Pop the last parent address from the stack
     public mutating func popParent() {
         _ = parentStack.popLast()
     }
@@ -84,20 +80,23 @@ public struct RenderContext: Sendable {
         terminalHeight: Int? = nil,
         capabilities: Capabilities? = nil,
         theme: Theme? = nil,
-        frame: Int? = nil
+        frame: Int? = nil,
+        options: SessionOptions? = nil
     ) -> RenderContext {
-        var context = self
-        if let width = terminalWidth {
-            context = RenderContext(
-                terminalWidth: width,
-                terminalHeight: context.terminalHeight,
-                capabilities: context.capabilities,
-                theme: context.theme,
-                frame: context.frame,
-                options: context.options
-            )
-        }
-        return context
+        var newContext = RenderContext(
+            terminalWidth: terminalWidth ?? self.terminalWidth,
+            terminalHeight: terminalHeight ?? self.terminalHeight,
+            capabilities: capabilities ?? self.capabilities,
+            theme: theme ?? self.theme,
+            frame: frame ?? self.frame,
+            options: options ?? self.options
+        )
+        
+        // Preserve internal state
+        newContext.parentStack = self.parentStack
+        newContext.currentPath = self.currentPath
+        
+        return newContext
     }
 }
 
@@ -206,16 +205,25 @@ public struct Capabilities: Sendable {
     }
 }
 
-#if os(macOS) || os(Linux)
+// Terminal size 取得のプラットフォーム分岐
+#if os(macOS)
 import Darwin
 
 private let TIOCGWINSZ: UInt = 0x40087468
-
 private struct winsize {
     var ws_row: UInt16 = 0
     var ws_col: UInt16 = 0
     var ws_xpixel: UInt16 = 0
     var ws_ypixel: UInt16 = 0
 }
+#elseif os(Linux)
+import Glibc
 
+private let TIOCGWINSZ: CUnsignedLong = 0x5413
+private struct winsize {
+    var ws_row: CUnsignedShort = 0
+    var ws_col: CUnsignedShort = 0
+    var ws_xpixel: CUnsignedShort = 0
+    var ws_ypixel: CUnsignedShort = 0
+}
 #endif

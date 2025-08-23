@@ -9,7 +9,7 @@ public enum ColumnWidth: Sendable, Hashable {
     case range(min: Int, max: Int)
 }
 
-public struct TableColumn: Sendable, Hashable {
+public struct TableColumn: Sendable, Hashable, Identifiable {
     public let id: String
     public let title: String
     public let width: ColumnWidth
@@ -28,7 +28,7 @@ public struct TableColumn: Sendable, Hashable {
     }
 }
 
-public struct TableRow: Sendable, Hashable {
+public struct TableRow: Sendable, Hashable, Identifiable {
     public let id: String
     public let cells: [String: String]
     public let style: RowStyle?
@@ -69,31 +69,38 @@ public struct GridColumn: Sendable, Hashable {
     }
 }
 
-public struct TreeItem: Sendable, Hashable {
+public struct TreeItem: Sendable, Hashable, Identifiable {
     public let id: String
     public let label: String
     public let icon: String?
     public let children: [TreeItem]
+    public let hasChildren: Bool
     public let isExpanded: Bool
     public let level: Int
     public let linePrefix: String
+    public let isLast: Bool
     
     public init(
         id: String,
         label: String,
         icon: String? = nil,
         children: [TreeItem] = [],
+        hasChildren: Bool? = nil,
         isExpanded: Bool = false,
         level: Int = 0,
-        linePrefix: String = ""
+        linePrefix: String = "",
+        isLast: Bool = false
     ) {
         self.id = id
         self.label = label
         self.icon = icon
         self.children = children
+        // If hasChildren is not explicitly set, derive from children
+        self.hasChildren = hasChildren ?? !children.isEmpty
         self.isExpanded = isExpanded
         self.level = level
         self.linePrefix = linePrefix
+        self.isLast = isLast
     }
 }
 

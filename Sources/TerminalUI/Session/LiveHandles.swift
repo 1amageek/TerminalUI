@@ -44,10 +44,10 @@ public final class ProgressHandle: LiveHandle {
 
         Task {
             let progress = Double(current) / Double(max(1, total))
-            let nodeID = NodeID("progress-\(sessionID)")
+            let address = Address("progress-\(sessionID)")
             
             let commands: [RenderCommand] = [
-                .frame(nodeID, FramePayload(
+                .frame(address, FramePayload(
                     frame: current,
                     progress: progress
                 ))
@@ -110,13 +110,13 @@ public final class SpinnerHandle: LiveHandle {
         
 
         self.animationTask = Task {
-            let nodeID = NodeID("spinner-\(sessionID)")
+            let address = Address("spinner-\(sessionID)")
             var frameIndex = 0
             
             while !Task.isCancelled {
                 let frame = style.frames[frameIndex % style.frames.count]
                 let commands: [RenderCommand] = [
-                    .setText(nodeID, frame)
+                    .setText(address, frame)
                 ]
                 
                 await runtime.applyCommands(commands)

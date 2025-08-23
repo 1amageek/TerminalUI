@@ -15,7 +15,7 @@ public struct Divider: ConsoleView {
     public init() {}
     
     public func _makeNode(context: inout RenderContext) -> Node {
-        let id = context.makeNodeID(for: "divider")
+        let address = context.makeAddress(for: "divider")
         
         let character: String = switch style {
         case .single: "─"
@@ -30,10 +30,11 @@ public struct Divider: ConsoleView {
             .with(.foreground, value: String(describing: color))
         
         return Node(
-            id: id,
+            address: address,
+            logicalID: nil,
             kind: .divider,
             properties: properties,
-            parentID: context.currentParent
+            parentAddress: context.currentParent
         )
     }
 }
@@ -50,4 +51,8 @@ public extension Divider {
         copy.color = color
         return copy
     }
+    public var body: Never {
+        fatalError("Divider is a primitive view")
+    }
+
 }

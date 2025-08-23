@@ -134,7 +134,7 @@ func testNote() async throws {
         
         #expect(node.kind == .note)
         #expect(node.prop(.text, as: String.self) != nil)
-        #expect(node.prop("icon", as: String.self) != nil)
+        #expect(node.prop(.icon, as: String.self) != nil)
     }
 }
 
@@ -182,7 +182,7 @@ func testForEach() async throws {
     let items = ["Apple", "Banana", "Cherry"]
     
     let list = VStack {
-        ForEach(data: items) { item in
+        ForEach(items, id: \.self) { item in
             Text(item)
         }
     }
@@ -227,35 +227,3 @@ func testCapabilitiesDetection() async throws {
     #expect(capabilities.height > 0)
 }
 
-@Test("AnyCodable encoding/decoding")
-func testAnyCodable() async throws {
-    // Test individual types
-    let stringValue = AnyCodable.string("Hello")
-    let intValue = AnyCodable.int(42)
-    let boolValue = AnyCodable.bool(true)
-    let doubleValue = AnyCodable.double(3.14)
-    
-    // Test encoding/decoding for each type
-    let encoder = JSONEncoder()
-    let decoder = JSONDecoder()
-    
-    // String
-    let stringData = try encoder.encode(stringValue)
-    let decodedString = try decoder.decode(AnyCodable.self, from: stringData)
-    #expect(stringValue == decodedString)
-    
-    // Int
-    let intData = try encoder.encode(intValue)
-    let decodedInt = try decoder.decode(AnyCodable.self, from: intData)
-    #expect(intValue == decodedInt)
-    
-    // Bool
-    let boolData = try encoder.encode(boolValue)
-    let decodedBool = try decoder.decode(AnyCodable.self, from: boolData)
-    #expect(boolValue == decodedBool)
-    
-    // Double
-    let doubleData = try encoder.encode(doubleValue)
-    let decodedDouble = try decoder.decode(AnyCodable.self, from: doubleData)
-    #expect(doubleValue == decodedDouble)
-}

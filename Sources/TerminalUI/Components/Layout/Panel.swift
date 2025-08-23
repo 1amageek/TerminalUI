@@ -1,8 +1,8 @@
 import Foundation
 
-public struct Panel<Content: ConsoleView>: ConsoleView {
+public struct Panel<Content: ConsoleView>: ContainerView {
     private let title: String?
-    private let content: Content
+    public let content: Content
     private var borderColor: ANSIColor = .semantic(.muted)
     private var rounded: Bool = false
     
@@ -11,9 +11,11 @@ public struct Panel<Content: ConsoleView>: ConsoleView {
         self.content = content()
     }
     
-    public func _makeNode(context: inout RenderContext) -> Node {
-        let id = context.makeNodeID(for: "panel")
-        
+    public var containerKind: NodeKind {
+        .panel
+    }
+    
+    public func extraProperties() -> PropertyContainer {
         var properties = PropertyContainer()
             .with(.border, value: String(describing: borderColor))
             .with(.rounded, value: rounded)
@@ -22,28 +24,7 @@ public struct Panel<Content: ConsoleView>: ConsoleView {
             properties = properties.with(.label, value: title)
         }
         
-
-        context.pushPath("panel")
-        context.pushParent(id)
-        let childNode = content._makeNode(context: &context)
-        context.popParent()
-        context.popPath()
-        
-
-        let children: [Node]
-        if childNode.kind == .group {
-            children = childNode.children
-        } else {
-            children = [childNode]
-        }
-        
-        return Node(
-            id: id,
-            kind: .panel,
-            children: children,
-            properties: properties,
-            parentID: context.currentParent
-        )
+        return properties
     }
 }
 

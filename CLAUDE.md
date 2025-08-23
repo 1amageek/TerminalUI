@@ -13,6 +13,7 @@ TerminalUI is a Swift library for creating rich terminal interfaces with declara
 3. **Immutable Value Types**: All views are immutable and optimized for differential rendering
 4. **Non-blocking**: All operations are async and non-blocking with actor-based runtime
 5. **Tracing Integration**: All rendering emits structured events to spans for observability
+6. **ID/Address Separation**: Logical IDs for stable identity in diffing, Addresses for hierarchical position
 
 ## Build and Development Commands
 
@@ -29,9 +30,6 @@ swift test --verbose
 # Run a specific test
 swift test --filter TerminalUITests.YourTestName
 
-# Generate Xcode project (if needed)
-swift package generate-xcodeproj
-
 # Clean build artifacts
 swift package clean
 
@@ -43,90 +41,113 @@ swift package update
 
 ### Core Components
 
-1. **ConsoleView Protocol & DSL**
+1. **Node System**
+   - `Address`: Hierarchical position identifier (e.g., "vstack.text.0")
+   - `LogicalID`: Stable identity for diffing (unique among siblings)
+   - `Node`: Immutable render tree nodes with properties
+   - `PropertyContainer`: Type-safe property storage with `Key<T>` pattern
+
+2. **ConsoleView Protocol & DSL**
    - Base protocol for all view components
-   - ConsoleBuilder result builder for SwiftUI-like syntax
-   - Node tree generation for rendering
+   - `ConsoleBuilder` result builder for SwiftUI-like syntax
+   - `body: Never` for primitive views, composed views use `body: some ConsoleView`
+   - ID modifiers: `.id(_)` for assigning logical IDs
 
-2. **ConsoleSession & Console**
-   - Session management tied to tracing spans (1:1 or 1:many)
-   - Entry point via `Console.start(on: span)`
-   - Methods: `render()`, `progress()`, `spinner()`, `log()`
+3. **RenderContext**
+   - Maintains rendering state during node generation
+   - Tracks path hierarchy for address generation
+   - Validates unique logical IDs in DEBUG builds
 
-3. **TerminalRuntime (Actor)**
+4. **Reconciler**
+   - Efficient tree diffing algorithm
+   - Prioritizes logical ID matching over positional matching
+   - Generates minimal update operations
+
+5. **TerminalRuntime (Actor)**
    - Central actor managing differential rendering
    - Processes Node trees and generates RenderCommands
-   - Manages multiple renderers (TTY, JSON, Tracing)
+   - Manages animation tasks by Address
+   - Coordinates multiple renderers
 
-4. **Renderers**
+6. **Renderers**
    - ANSIRenderer: TTY output with ANSI escape codes
    - JSONRenderer: Structured output for IDEs/logging
    - TracingRenderer: Span event emission
 
-### Implementation Priority
+### Component Structure
 
-When implementing features, follow this order:
-1. Core node system and render context
-2. Runtime with diff engine and layout
-3. Basic renderers (ANSI first)
-4. Session management
-5. Effects (spinner, progress, shimmer)
-6. Components (text, layouts, data displays)
-7. Tracing integration
-8. Tests and documentation
+**Layout Components**
+- `VStack`, `HStack`, `ZStack`: Container views implementing `ContainerView` protocol
+- `Spacer`, `Divider`: Layout primitives
+- `Panel`, `Group`: Organizational containers
 
-## Key Technical Decisions
+**Data Components**
+- `ForEach`: Requires stable IDs via `id:` parameter or `Identifiable` conformance
+- `List`, `Table`: Collection displays
+- `KeyValue`: Key-value pair display
 
-### Color Handling
-- Automatic fallback: TrueColor → 256 colors → 16 colors
-- Respect NO_COLOR environment variable
-- Detect capabilities via COLORTERM, TERM env vars
+**Text Components**
+- `Text`: Basic text with style modifiers
+- `Badge`, `Note`: Semantic text displays
+- `Code`: Syntax-highlighted code blocks
 
-### Performance Constraints
-- Maximum 15 FPS for animations (default)
-- Coalesce rapid updates to prevent flicker
-- Memory budget: ~thousands of nodes per session
+**Progress Components**
+- `ProgressView`: Determinate/indeterminate progress
+- `Spinner`: Animated loading indicators
+- `Meter`: Visual progress meters
 
-### Effects Implementation
-- **Shimmer**: HSV phase shift per character
-- **Blink**: Low frequency duty cycle (readability-first)
-- **Pulse**: Size/brightness modulation
-- **Spinners**: Pre-defined patterns (dots, line, arc, bounce, braille)
+### ForEach Requirements
+
+ForEach requires stable IDs for all elements:
+- Use `ForEach(items)` for `Identifiable` types
+- Use `ForEach(items, id: \.property)` with explicit key path
+- Use `ForEach(0..<5)` for ranges (Int as ID)
+- No fallback to indices or hashes
+
+### Property System
+
+Properties use type-safe keys:
+```swift
+extension PropertyContainer.Key {
+    static let text = Key<String>("text")
+    static let foreground = Key<String>("foreground")
+    // etc.
+}
+```
+
+Access via: `node.prop(.text, as: String.self)`
 
 ## Testing Strategy
 
-1. **Golden Tests**: DSL → Node → RenderCommand → Expected ANSI
-2. **Width Reflow**: Terminal resize handling
-3. **Color Fallback**: Graceful degradation testing
-4. **Effects**: FPS limits and stop conditions
-5. **Headless Mode**: Event emission without TTY
+1. **Unit Tests**: Component behavior and node generation
+2. **Reconciler Tests**: Tree diffing correctness
+3. **Render Tests**: Command generation validation
+4. **Integration Tests**: End-to-end rendering
+5. **Performance Tests**: Large tree handling
 
-## Dependency Management
+## Performance Constraints
 
-The library must add swift-distributed-tracing as a dependency:
-```swift
-dependencies: [
-    .package(url: "https://github.com/apple/swift-distributed-tracing.git", from: "1.0.0")
-]
-```
+- Maximum 15 FPS for animations (configurable)
+- Coalesce rapid updates to prevent flicker
+- Memory budget: ~thousands of nodes per session
+- Duplicate LogicalID validation in DEBUG only
 
-## Session Options
+## Color Handling
 
-Default values to implement:
-- `collapseChildren: true` (fold child spans)
-- `liveFPS: 15` (max frame rate)
-- `headless: false` (TTY rendering enabled)
-- `theme: .default` (color scheme)
+- Automatic fallback: TrueColor → 256 colors → 16 colors
+- Respect NO_COLOR environment variable
+- Detect capabilities via COLORTERM, TERM env vars
+- Theme system for semantic colors
 
 ## Tracing Event Schema
 
 All UI operations emit events with name `"terminalui.render"` and attributes:
-- `ui.op`: "node_start" | "node_update" | "node_end" | "frame"
+- `ui.op`: Operation type
 - `ui.node_type`: Component type
-- `ui.id` / `ui.parent_id`: Stable identifiers
-- `ui.json`: Compressed payload (optional)
-- `ui.version`: "1.0"
-- `ui.color_mode`: "truecolor" | "256" | "16"
+- `ui.address`: Node address
+- `ui.logical_id`: Stable identifier (if present)
+- `ui.version`: Schema version
+- `ui.color_mode`: Color capability
 
 ## SwiftAgent Integration
 
@@ -134,4 +155,5 @@ Create a separate target `TerminalUIAdapterSwiftAgent` (not in core) that provid
 - SpanModifier
 - RenderModifier  
 - StatusModifier
+
 These allow SwiftAgent Steps to use TerminalUI without core dependency.

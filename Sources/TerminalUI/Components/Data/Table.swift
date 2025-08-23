@@ -46,10 +46,17 @@ public struct Table: ConsoleView {
             .with(.columnWidths, value: widths)
             .with(.showHeader, value: showHeader)
             .with(.showBorder, value: showBorder)
+            .with(.borderStyle, value: borderStyleString(borderStyle))
             .with(.striped, value: striped)
             .with(.compact, value: compact)
         
-        return Node(id: context.makeNodeID(), kind: .table, properties: properties)
+        return Node(
+            address: context.makeAddress(for: "table"),
+            logicalID: nil,
+            kind: .table,
+            properties: properties,
+            parentAddress: context.currentParent
+        )
     }
     
     public var body: Never {
@@ -78,7 +85,10 @@ public struct Table: ConsoleView {
                 widths[column.id] = w
                 fixedWidth += w
             case .percentage(let pct):
-                let w = Int(Double(totalWidth) * pct)
+                // pct: 0–100 を想定（Grid と統一）
+                let borders = showBorder ? (columns.count + 1) : 0
+                let avail = totalWidth - borders
+                let w = Int((pct / 100.0) * Double(avail))
                 widths[column.id] = w
                 fixedWidth += w
             case .min(let minWidth):
@@ -136,164 +146,6 @@ public struct Table: ConsoleView {
         case .ascii: return "ascii"
         }
     }
-}
-
-extension Table {
-    static func render(_ node: Node, at position: Point, width: Int) -> [RenderCommand] {
-        var commands: [RenderCommand] = []
-        
-        let showBorder = node.properties[.showBorder] ?? true
-        let borderStyle = "single"
-        let showHeader = node.properties[.showHeader] ?? true
-        let striped = node.properties[.striped] ?? false
-        
-
-        let borders = getBorderChars(style: borderStyle)
-        
-        var currentY = position.y
-        
-
-        if showBorder {
-            drawTopBorder(at: Point(x: position.x, y: currentY), width: width, borders: borders, commands: &commands)
-            currentY += 1
-        }
-        
-
-        if showHeader {
-            drawHeader(at: Point(x: position.x, y: currentY), node: node, borders: borders, commands: &commands)
-            currentY += 1
-            
-            if showBorder {
-                drawMiddleBorder(at: Point(x: position.x, y: currentY), width: width, borders: borders, commands: &commands)
-                currentY += 1
-            }
-        }
-        
-
-        if let rows: [TableRow] = node.properties[.rows] {
-            for (index, row) in rows.enumerated() {
-                let isStriped = striped && index % 2 == 1
-                drawRowTypeSafe(at: Point(x: position.x, y: currentY), row: row, node: node, borders: borders, isStriped: isStriped, commands: &commands)
-                currentY += 1
-            }
-        }
-        
-
-        if showBorder {
-            drawBottomBorder(at: Point(x: position.x, y: currentY), width: width, borders: borders, commands: &commands)
-        }
-        
-        return commands
-    }
-    
-    private static func getBorderChars(style: String) -> TableBorders {
-        switch style {
-        case "double":
-            return TableBorders.double
-        case "rounded":
-            return TableBorders.rounded
-        case "ascii":
-            return TableBorders.ascii
-        default:
-            return TableBorders.single
-        }
-    }
-    
-    private static func drawTopBorder(at position: Point, width: Int, borders: TableBorders, commands: inout [RenderCommand]) {
-        commands.append(.moveCursor(row: position.y, column: position.x))
-        commands.append(.write(borders.topLeft))
-        commands.append(.write(String(repeating: borders.horizontal, count: width - 2)))
-        commands.append(.write(borders.topRight))
-    }
-    
-    private static func drawMiddleBorder(at position: Point, width: Int, borders: TableBorders, commands: inout [RenderCommand]) {
-        commands.append(.moveCursor(row: position.y, column: position.x))
-        commands.append(.write(borders.middleLeft))
-        commands.append(.write(String(repeating: borders.horizontal, count: width - 2)))
-        commands.append(.write(borders.middleRight))
-    }
-    
-    private static func drawBottomBorder(at position: Point, width: Int, borders: TableBorders, commands: inout [RenderCommand]) {
-        commands.append(.moveCursor(row: position.y, column: position.x))
-        commands.append(.write(borders.bottomLeft))
-        commands.append(.write(String(repeating: borders.horizontal, count: width - 2)))
-        commands.append(.write(borders.bottomRight))
-    }
-    
-    private static func drawHeader(at position: Point, node: Node, borders: TableBorders, commands: inout [RenderCommand]) {
-        commands.append(.moveCursor(row: position.y, column: position.x))
-        
-        if borders.vertical != "" {
-            commands.append(.write(borders.vertical))
-        }
-        
-        if let columns: [TableColumn] = node.properties[.columns],
-           let widths: [String: Int] = node.properties[.columnWidths] {
-            for column in columns {
-                commands.append(.setStyle(.bold))
-                let width = widths[column.id] ?? 10
-                let padded = padText(column.title, width: width, alignment: .center)
-                commands.append(.write(padded))
-                commands.append(.reset)
-                
-                if borders.vertical != "" {
-                    commands.append(.write(borders.vertical))
-                }
-            }
-        }
-    }
-    
-    private static func drawRowTypeSafe(at position: Point, row: TableRow, node: Node, borders: TableBorders, isStriped: Bool, commands: inout [RenderCommand]) {
-        commands.append(.moveCursor(row: position.y, column: position.x))
-        
-        if isStriped {
-            commands.append(.setBackground(.semantic(.muted)))
-        }
-        
-        if borders.vertical != "" {
-            commands.append(.write(borders.vertical))
-        }
-        
-        if let columns: [TableColumn] = node.properties[.columns],
-           let widths: [String: Int] = node.properties[.columnWidths] {
-            for column in columns {
-                let text = row.cells[column.id] ?? ""
-                let width = widths[column.id] ?? 10
-                let padded = padText(text, width: width, alignment: column.alignment)
-                commands.append(.write(padded))
-                
-                if borders.vertical != "" {
-                    commands.append(.write(borders.vertical))
-                }
-            }
-        }
-        
-        if isStriped {
-            commands.append(.reset)
-        }
-    }
-    private static func padText(_ text: String, width: Int, alignment: TextAlignment) -> String {
-        let textWidth = text.terminalWidth
-        guard textWidth < width else {
-            return text.truncated(to: width)
-        }
-        
-        let padding = width - textWidth
-        
-        switch alignment {
-        case .left, .leading:
-            return text + String(repeating: " ", count: padding)
-        case .right, .trailing:
-            return String(repeating: " ", count: padding) + text
-        case .center:
-            let leftPad = padding / 2
-            let rightPad = padding - leftPad
-            return String(repeating: " ", count: leftPad) + text + String(repeating: " ", count: rightPad)
-        case .justified:
-            return text + String(repeating: " ", count: padding)
-        }
-    }
-    
 }
 
 struct TableBorders {

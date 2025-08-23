@@ -10,10 +10,11 @@ public actor TerminalRuntime {
 
     private var currentTree: Node?
     
-
+    /// Previous tree for diffing
+    private var previousTree: Node?
     
-
-    
+    /// Reconciler for efficient tree diffing
+    private let reconciler = Reconciler()
 
     private let layoutEngine: LayoutEngine
     
@@ -25,7 +26,7 @@ public actor TerminalRuntime {
     private var terminalHeight: Int = 24
     
 
-    private var animationTasks: [NodeID: Task<Void, Never>] = [:]
+    private var animationTasks: [Address: Task<Void, Never>] = [:]
     
 
     private var sessionOptions: SessionOptions = .default
@@ -76,7 +77,20 @@ public actor TerminalRuntime {
         sessionOptions = options
         debug = options.debug
         
-
+        // Perform reconciliation with previous tree
+        let reconciliationResult = reconciler.reconcile(
+            oldTree: previousTree,
+            newTree: tree
+        )
+        
+        if debug {
+            print("[DEBUG] Reconciliation: \(reconciliationResult.summary)")
+            #if DEBUG
+            reconciler.printReconciliation(reconciliationResult)
+            #endif
+        }
+        
+        // Layout the new tree
         let layoutContext = LayoutContext(
             width: terminalWidth,
             height: terminalHeight,
@@ -84,19 +98,71 @@ public actor TerminalRuntime {
         )
         let layoutTree = layoutEngine.layout(tree, context: layoutContext)
         
-
-        let commands: [RenderCommand] = [.clear] + paintEngine.paint(layoutTree)
+        // Generate commands based on reconciliation
+        let commands: [RenderCommand]
+        if previousTree == nil || !reconciliationResult.hasChanges {
+            // Full render for first frame or no changes
+            commands = [.clear] + paintEngine.paint(layoutTree)
+        } else {
+            // Incremental update based on reconciliation
+            commands = generateIncrementalCommands(
+                reconciliation: reconciliationResult,
+                layoutTree: layoutTree
+            )
+        }
         
-
         if debug {
             print("[DEBUG] Generated \(commands.count) render commands")
         }
         
-
+        // Apply the commands
         await applyCommands(commands)
         
-
+        // Update state for next reconciliation
+        previousTree = tree
         currentTree = layoutTree
+    }
+    
+    /// Generate incremental render commands based on reconciliation
+    private func generateIncrementalCommands(
+        reconciliation: Reconciler.ReconciliationResult,
+        layoutTree: Node
+    ) -> [RenderCommand] {
+        var commands: [RenderCommand] = []
+        
+        // Process deletions first (bottom-up)
+        for deletion in reconciliation.deletions {
+            commands.append(.end(deletion.node.address))
+        }
+        
+        // Process moves
+        for move in reconciliation.moves {
+            if case .move(let from, let to) = move.type {
+                // For now, treat moves as delete + insert
+                commands.append(.end(from))
+                commands.append(.begin(to, move.node.kind, parent: move.node.parentAddress))
+            }
+        }
+        
+        // Process updates
+        for update in reconciliation.updates {
+            // Paint only the updated node
+            let paintCommands = paintEngine.paint(update.node)
+            commands.append(contentsOf: paintCommands)
+        }
+        
+        // Process insertions (top-down)
+        for insertion in reconciliation.insertions {
+            commands.append(.begin(
+                insertion.node.address,
+                insertion.node.kind,
+                parent: insertion.node.parentAddress
+            ))
+            let paintCommands = paintEngine.paint(insertion.node)
+            commands.append(contentsOf: paintCommands)
+        }
+        
+        return commands
     }
     
 
@@ -133,13 +199,13 @@ public actor TerminalRuntime {
     
 
     public func startAnimation(
-        for nodeID: NodeID,
+        for address: Address,
         duration: TimeInterval,
         fps: Int,
         update: @escaping @Sendable (Double) async -> [RenderCommand]
     ) {
 
-        animationTasks[nodeID]?.cancel()
+        animationTasks[address]?.cancel()
         
 
         let task = Task {
@@ -163,16 +229,16 @@ public actor TerminalRuntime {
             }
             
 
-            _ = animationTasks.removeValue(forKey: nodeID)
+            _ = animationTasks.removeValue(forKey: address)
         }
         
-        animationTasks[nodeID] = task
+        animationTasks[address] = task
     }
     
 
-    public func stopAnimation(for nodeID: NodeID) {
-        animationTasks[nodeID]?.cancel()
-        animationTasks.removeValue(forKey: nodeID)
+    public func stopAnimation(for address: Address) {
+        animationTasks[address]?.cancel()
+        animationTasks.removeValue(forKey: address)
     }
     
 

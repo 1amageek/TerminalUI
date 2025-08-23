@@ -2,16 +2,16 @@ import Foundation
 
 public enum RenderCommand: Sendable, Equatable {
 
-    case begin(NodeID, NodeKind, parent: NodeID?)
+    case begin(Address, NodeKind, parent: Address?)
     
 
-    case setText(NodeID, String)
+    case setText(Address, String)
     
 
-    case frame(NodeID, FramePayload)
+    case frame(Address, FramePayload)
     
 
-    case end(NodeID)
+    case end(Address)
     
 
     case clear

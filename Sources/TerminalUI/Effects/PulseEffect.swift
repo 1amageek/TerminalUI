@@ -61,6 +61,115 @@ public enum EasingFunction: Sendable {
     }
 }
 
+public struct PulseEffectView: ConsoleView {
+    private let content: AnyConsoleView
+    private let effect: PulseEffect
+    private let isActive: Bool
+    
+    public init<Content: ConsoleView>(
+        effect: PulseEffect = .colorPulse,
+        isActive: Bool = true,
+        @ConsoleBuilder content: () -> Content
+    ) {
+        self.content = AnyConsoleView(content())
+        self.effect = effect
+        self.isActive = isActive
+    }
+    
+    public func _makeNode(context: inout RenderContext) -> Node {
+        var node = content._makeNode(context: &context)
+        
+        if isActive {
+            let pulseKey = PropertyContainer.Key<Bool>("pulse")
+            let pulseEffectKey = PropertyContainer.Key<PulseEffect>("pulseEffect")
+            let pulseFrameKey = PropertyContainer.Key<Int>("pulseFrame")
+            
+            node = node.with(properties: node.properties
+                .with(pulseKey, value: true)
+                .with(pulseEffectKey, value: effect)
+                .with(pulseFrameKey, value: context.frame)
+            )
+        }
+        
+        return node
+    }
+    
+    public var body: Never {
+        fatalError("PulseEffectView is a modifier")
+    }
+}
+
+public extension ConsoleView {
+    func pulse(
+        type: PulseEffect.PulseType,
+        duration: TimeInterval = 1.0,
+        cycles: Int? = nil,
+        easing: EasingFunction = .easeInOut,
+        isActive: Bool = true
+    ) -> some ConsoleView {
+        PulseEffectView(
+            effect: PulseEffect(
+                type: type,
+                duration: duration,
+                cycles: cycles,
+                easing: easing
+            ),
+            isActive: isActive
+        ) {
+            self
+        }
+    }
+    
+    func pulse(
+        _ effect: PulseEffect = .colorPulse,
+        isActive: Bool = true
+    ) -> some ConsoleView {
+        PulseEffectView(
+            effect: effect,
+            isActive: isActive
+        ) {
+            self
+        }
+    }
+    
+    func colorPulse(
+        baseColor: ANSIColor = .semantic(.primary),
+        pulseColor: ANSIColor = .semantic(.accent),
+        duration: TimeInterval = 2.0,
+        isActive: Bool = true
+    ) -> some ConsoleView {
+        pulse(
+            type: .color(baseColor: baseColor, pulseColor: pulseColor),
+            duration: duration,
+            isActive: isActive
+        )
+    }
+    
+    func scalePulse(
+        maxScale: Double = 1.2,
+        duration: TimeInterval = 1.5,
+        isActive: Bool = true
+    ) -> some ConsoleView {
+        pulse(
+            type: .scale(maxScale: maxScale),
+            duration: duration,
+            isActive: isActive
+        )
+    }
+    
+    func brightnessPulse(
+        maxBrightness: Double = 1.5,
+        duration: TimeInterval = 1.0,
+        isActive: Bool = true
+    ) -> some ConsoleView {
+        pulse(
+            type: .brightness(maxBrightness: maxBrightness),
+            duration: duration,
+            isActive: isActive
+        )
+    }
+}
+
 public struct PulseAnimator: Sendable {
     private let scheduler = AnimationScheduler.shared
     private let runtime = TerminalRuntime.shared
@@ -69,10 +178,10 @@ public struct PulseAnimator: Sendable {
     
 
     public func startPulse(
-        nodeID: NodeID,
+        address: Address,
         effect: PulseEffect
     ) async {
-        let animationID = AnimationScheduler.AnimationID("pulse-\(nodeID.value)")
+        let animationID = AnimationScheduler.AnimationID("pulse-\(address.raw)")
         
         await scheduler.animate(
             id: animationID,
@@ -86,7 +195,7 @@ public struct PulseAnimator: Sendable {
                 
 
                 let commands = Self.generatePulseCommands(
-                    nodeID: nodeID,
+                    address: address,
                     effect: effect,
                     intensity: intensity
                 )
@@ -97,8 +206,8 @@ public struct PulseAnimator: Sendable {
     }
     
 
-    public func stopPulse(nodeID: NodeID) async {
-        let animationID = AnimationScheduler.AnimationID("pulse-\(nodeID.value)")
+    public func stopPulse(address: Address) async {
+        let animationID = AnimationScheduler.AnimationID("pulse-\(address.raw)")
         await scheduler.cancelAnimation(animationID)
     }
     
@@ -112,27 +221,27 @@ public struct PulseAnimator: Sendable {
     
 
     static func generatePulseCommands(
-        nodeID: NodeID,
+        address: Address,
         effect: PulseEffect,
         intensity: Double
     ) -> [RenderCommand] {
         switch effect.type {
         case .color(let baseColor, let pulseColor):
             return generateColorPulseCommands(
-                nodeID: nodeID,
+                address: address,
                 baseColor: baseColor,
                 pulseColor: pulseColor,
                 intensity: intensity
             )
         case .scale(let maxScale):
             return generateScalePulseCommands(
-                nodeID: nodeID,
+                address: address,
                 maxScale: maxScale,
                 intensity: intensity
             )
         case .brightness(let maxBrightness):
             return generateBrightnessPulseCommands(
-                nodeID: nodeID,
+                address: address,
                 maxBrightness: maxBrightness,
                 intensity: intensity
             )
@@ -141,7 +250,7 @@ public struct PulseAnimator: Sendable {
     
 
     static func generateColorPulseCommands(
-        nodeID: NodeID,
+        address: Address,
         baseColor: ANSIColor,
         pulseColor: ANSIColor,
         intensity: Double
@@ -160,7 +269,7 @@ public struct PulseAnimator: Sendable {
     
 
     static func generateScalePulseCommands(
-        nodeID: NodeID,
+        address: Address,
         maxScale: Double,
         intensity: Double
     ) -> [RenderCommand] {
@@ -178,7 +287,7 @@ public struct PulseAnimator: Sendable {
     
 
     static func generateBrightnessPulseCommands(
-        nodeID: NodeID,
+        address: Address,
         maxBrightness: Double,
         intensity: Double
     ) -> [RenderCommand] {

@@ -10,7 +10,7 @@ public struct Badge: ConsoleView {
     }
     
     public func _makeNode(context: inout RenderContext) -> Node {
-        let id = context.makeNodeID(for: "badge")
+        let address = context.makeAddress(for: "badge")
         
         var properties = PropertyContainer()
             .with(.text, value: title)
@@ -21,10 +21,11 @@ public struct Badge: ConsoleView {
         }
         
         return Node(
-            id: id,
+            address: address,
+            logicalID: nil,
             kind: .badge,
             properties: properties,
-            parentID: context.currentParent
+            parentAddress: context.currentParent
         )
     }
 }
@@ -41,4 +42,8 @@ public extension Badge {
         copy.inverted = value
         return copy
     }
+    public var body: Never {
+        fatalError("Badge is a primitive view")
+    }
+
 }

@@ -6,7 +6,7 @@ public struct Code: ConsoleView {
     private let showLineNumbers: Bool
     private let lineNumberColor: ANSIColor
     private let backgroundColor: ANSIColor?
-    private let highlightLines: Set<Int>
+    private let highlightedLines: [Int]
     
     public init(
         _ content: String,
@@ -14,14 +14,14 @@ public struct Code: ConsoleView {
         showLineNumbers: Bool = false,
         lineNumberColor: ANSIColor = .semantic(.muted),
         backgroundColor: ANSIColor? = nil,
-        highlightLines: Set<Int> = []
+        highlightedLines: [Int] = []
     ) {
         self.content = content
         self.language = language
         self.showLineNumbers = showLineNumbers
         self.lineNumberColor = lineNumberColor
         self.backgroundColor = backgroundColor
-        self.highlightLines = highlightLines
+        self.highlightedLines = highlightedLines
     }
     
     public func _makeNode(context: inout RenderContext) -> Node {
@@ -31,14 +31,14 @@ public struct Code: ConsoleView {
             .with(.lines, value: lines)
             .with(.language, value: language ?? "")
             .with(.showLineNumbers, value: showLineNumbers)
-            .with(.lineNumberColor, value: lineNumberColor.toHex())
             .with(.backgroundColor, value: backgroundColor?.toHex() ?? "")
-            .with(.highlightLines, value: Array(highlightLines))
         
         return Node(
-            id: context.makeNodeID(),
+            address: context.makeAddress(for: "code"),
+            logicalID: nil,
             kind: .code,
-            properties: properties
+            properties: properties,
+            parentAddress: context.currentParent
         )
     }
 }
@@ -59,7 +59,7 @@ public struct CodeRenderer {
         
         let language = node.properties[.language] ?? ""
         let showLineNumbers = node.properties[.showLineNumbers] ?? false
-        let highlightLines = Set(node.properties[.highlightLines] ?? [])
+        let highlightLines: Set<Int> = []
         
         var currentY = position.y
         
@@ -96,11 +96,7 @@ public struct CodeRenderer {
             
 
             if showLineNumbers {
-                if let lineNumColorHex: String = node.properties[.lineNumberColor] {
-                    if let lineNumColor = ANSIColor.fromHex(lineNumColorHex) {
-                        commands.append(.setForeground(lineNumColor))
-                    }
-                }
+                commands.append(.setForeground(.semantic(.muted)))
                 let paddedLineNum = String(lineNumber).padding(toLength: lineNumberWidth - 2, withPad: " ", startingAt: 0)
                 commands.append(.write("\(paddedLineNum)│ "))
                 commands.append(.reset)
@@ -116,9 +112,10 @@ public struct CodeRenderer {
             commands.append(.write(line))
             
 
-            let lineLength = line.count + lineNumberWidth
-            if lineLength < width {
-                commands.append(.write(String(repeating: " ", count: width - position.x - lineLength)))
+            let contentWidth = (showLineNumbers ? lineNumberWidth : 0) + line.terminalWidth
+            let remaining = max(0, width - contentWidth)
+            if remaining > 0 {
+                commands.append(.write(String(repeating: " ", count: remaining)))
             }
             
             commands.append(.reset)
@@ -153,5 +150,9 @@ public extension Code {
 
     static func shell(_ content: String) -> Code {
         Code(content, language: "Shell", showLineNumbers: false)
+    }
+    
+    public var body: Never {
+        fatalError("Code is a primitive view")
     }
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-public struct ListItem: Sendable {
+public struct ListItem: Sendable, Identifiable {
     public let id: String
     public let content: String
     public let icon: String?
@@ -62,6 +62,7 @@ public struct List: ConsoleView {
     private let items: [ListItem]
     private let style: ListStyle
     private let selectedIndices: Set<Int>
+    private let selectedIDs: Set<String>
     private let compact: Bool
     private let showIcons: Bool
     private let showBadges: Bool
@@ -79,6 +80,26 @@ public struct List: ConsoleView {
         self.items = items
         self.style = style
         self.selectedIndices = selectedIndices
+        self.selectedIDs = []
+        self.compact = compact
+        self.showIcons = showIcons
+        self.showBadges = showBadges
+        self.indentLevel = indentLevel
+    }
+    
+    public init(
+        items: [ListItem],
+        style: ListStyle = .bulleted,
+        selectedIDs: Set<String>,
+        compact: Bool = false,
+        showIcons: Bool = true,
+        showBadges: Bool = true,
+        indentLevel: Int = 0
+    ) {
+        self.items = items
+        self.style = style
+        self.selectedIndices = []
+        self.selectedIDs = selectedIDs
         self.compact = compact
         self.showIcons = showIcons
         self.showBadges = showBadges
@@ -88,14 +109,15 @@ public struct List: ConsoleView {
     public func _makeNode(context: inout RenderContext) -> Node {
 
         let renderItems = items.enumerated().map { index, item in
-            ListItemData(
+            let isSelected = selectedIndices.contains(index) || selectedIDs.contains(item.id)
+            return ListItemData(
                 id: item.id,
                 content: item.content,
                 icon: item.icon ?? "",
                 badge: item.badge ?? "",
                 style: styleString(item.style),
-                isSelected: selectedIndices.contains(index),
-                bullet: getBullet(for: index)
+                isSelected: isSelected,
+                bullet: getBullet(for: index, isSelected: isSelected)
             )
         }
         
@@ -104,17 +126,23 @@ public struct List: ConsoleView {
             .with(.kind, value: styleString(style))
             .with(.compact, value: compact)
             .with(.showIcons, value: showIcons)
-            .with(.showBorder, value: showBadges)
+            .with(.showBadges, value: showBadges)
             .with(.indentWidth, value: indentLevel)
         
-        return Node(id: context.makeNodeID(), kind: .list, properties: properties)
+        return Node(
+            address: context.makeAddress(for: "list"),
+            logicalID: nil,
+            kind: .list,
+            properties: properties,
+            parentAddress: context.currentParent
+        )
     }
     
     public var body: Never {
         fatalError("List is a leaf component")
     }
     
-    private func getBullet(for index: Int) -> String {
+    private func getBullet(for index: Int, isSelected: Bool) -> String {
         switch style {
         case .plain:
             return ""
@@ -123,7 +151,7 @@ public struct List: ConsoleView {
         case .numbered:
             return "\(index + 1)."
         case .checkbox:
-            return selectedIndices.contains(index) ? "☑" : "☐"
+            return isSelected ? "☑" : "☐"
         case .definition:
             return "▸"
         }
@@ -165,7 +193,7 @@ public struct ListRenderer {
         
         let compact = node.properties[.compact] ?? false
         let showIcons = node.properties[.showIcons] ?? true
-        let showBadges = node.properties[.showBorder] ?? true
+        let showBadges = node.properties[.showBadges] ?? true
         let indentLevel = node.properties[.indentWidth] ?? 0
         
         guard let items: [ListItemData] = node.properties[.listItems] else {

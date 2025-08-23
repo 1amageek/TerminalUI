@@ -18,7 +18,7 @@ public struct Text: ConsoleView {
     }
     
     public func _makeNode(context: inout RenderContext) -> Node {
-        let id = context.makeNodeID(for: "text")
+        let address = context.makeAddress(for: "text")
         
         var properties = PropertyContainer()
             .with(.text, value: content)
@@ -37,9 +37,11 @@ public struct Text: ConsoleView {
         if isDim { properties = properties.with(.dim, value: true) }
         
         return Node(
-            id: id,
+            address: address,
+            logicalID: nil,
             kind: .text,
-            properties: properties
+            properties: properties,
+            parentAddress: context.currentParent
         )
     }
 }
@@ -80,4 +82,8 @@ public extension Text {
         copy.isDim = true
         return copy
     }
+    public var body: Never {
+        fatalError("Text is a primitive view")
+    }
+
 }

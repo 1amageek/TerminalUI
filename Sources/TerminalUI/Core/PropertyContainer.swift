@@ -1,6 +1,6 @@
 import Foundation
 
-public struct PropertyContainer: Sendable {
+public struct PropertyContainer: Sendable, Equatable {
 
     public struct Key<Value: Sendable>: Sendable, Hashable {
         let name: String
@@ -64,6 +64,25 @@ public struct PropertyContainer: Sendable {
             return nil
         }
     }
+    
+    public static func == (lhs: PropertyContainer, rhs: PropertyContainer) -> Bool {
+        // Compare storage dictionaries by converting to comparable representation
+        guard lhs.storage.count == rhs.storage.count else { return false }
+        
+        for (key, lhsValue) in lhs.storage {
+            guard let rhsValue = rhs.storage[key] else { return false }
+            
+            // Compare values using string representation as a fallback
+            // This is not perfect but works for most cases
+            let lhsString = String(describing: lhsValue)
+            let rhsString = String(describing: rhsValue)
+            if lhsString != rhsString {
+                return false
+            }
+        }
+        
+        return true
+    }
 }
 
 public extension PropertyContainer {
@@ -119,6 +138,7 @@ public extension PropertyContainer.Key {
     static var compact: PropertyContainer.Key<Bool> { PropertyContainer.Key("compact") }
     static var showIcons: PropertyContainer.Key<Bool> { PropertyContainer.Key("showIcons") }
     static var showLines: PropertyContainer.Key<Bool> { PropertyContainer.Key("showLines") }
+    static var showBadges: PropertyContainer.Key<Bool> { PropertyContainer.Key("showBadges") }
     static var inverted: PropertyContainer.Key<Bool> { PropertyContainer.Key("inverted") }
     static var bold: PropertyContainer.Key<Bool> { PropertyContainer.Key("bold") }
     static var italic: PropertyContainer.Key<Bool> { PropertyContainer.Key("italic") }
@@ -127,8 +147,6 @@ public extension PropertyContainer.Key {
     
 
     static var lines: PropertyContainer.Key<[String]> { PropertyContainer.Key("lines") }
-    static var highlightLines: PropertyContainer.Key<[Int]> { PropertyContainer.Key("highlightLines") }
-    static var frames: PropertyContainer.Key<[String]> { PropertyContainer.Key("frames") }
     
 
     static var spacing: PropertyContainer.Key<Int> { PropertyContainer.Key("spacing") }
@@ -141,19 +159,19 @@ public extension PropertyContainer.Key {
     static var background: PropertyContainer.Key<String> { PropertyContainer.Key("background") }
     static var tint: PropertyContainer.Key<String> { PropertyContainer.Key("tint") }
     static var backgroundColor: PropertyContainer.Key<String> { PropertyContainer.Key("backgroundColor") }
-    static var lineNumberColor: PropertyContainer.Key<String> { PropertyContainer.Key("lineNumberColor") }
     static var color: PropertyContainer.Key<String> { PropertyContainer.Key("color") }
     static var unit: PropertyContainer.Key<String> { PropertyContainer.Key("unit") }
-    static var icon: PropertyContainer.Key<String> { PropertyContainer.Key("icon") }
     static var kind: PropertyContainer.Key<String> { PropertyContainer.Key("kind") }
+    static var frames: PropertyContainer.Key<[String]> { PropertyContainer.Key("frames") }
+    static var icon: PropertyContainer.Key<String> { PropertyContainer.Key("icon") }
     
 
-    static var colors: PropertyContainer.Key<[String: String]> { PropertyContainer.Key("colors") }
     
 
     static var columns: PropertyContainer.Key<[TableColumn]> { PropertyContainer.Key("columns") }
     static var rows: PropertyContainer.Key<[TableRow]> { PropertyContainer.Key("rows") }
     static var columnWidths: PropertyContainer.Key<[String: Int]> { PropertyContainer.Key("columnWidths") }
+    static var borderStyle: PropertyContainer.Key<String> { PropertyContainer.Key("borderStyle") }
     static var items: PropertyContainer.Key<[TreeItem]> { PropertyContainer.Key("items") }
     static var gridData: PropertyContainer.Key<GridData> { PropertyContainer.Key("gridData") }
     static var listItems: PropertyContainer.Key<[ListItemData]> { PropertyContainer.Key("listItems") }
@@ -196,43 +214,10 @@ public extension PropertyContainer {
     }
 }
 
-extension PropertyContainer: Codable {
-    private struct CodableEntry: Codable {
-        let key: String
-        let value: Data
-    }
-    
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let entries = try container.decode([CodableEntry].self)
-        
-        var storage: [AnyHashable: any Sendable] = [:]
-        for entry in entries {
-
-            if let stringValue = String(data: entry.value, encoding: .utf8) {
-                let key = PropertyContainer.Key<String>(entry.key)
-                storage[AnyHashable(key)] = stringValue
-            }
-        }
-        
-        self.storage = storage
-    }
-    
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        let entries: [CodableEntry] = storage.compactMap { (key, value) in
-            guard let propertyKey = key.base as? AnyPropertyKey,
-                  let stringValue = value as? String else {
-                return nil
-            }
-            
-            let data = stringValue.data(using: .utf8) ?? Data()
-            return CodableEntry(key: propertyKey.name, value: data)
-        }
-        
-        try container.encode(entries)
-    }
-}
+// MARK: - Codable support removed
+// PropertyContainer's Codable support has been removed because it only handled String values.
+// If persistence is needed in the future, consider implementing a proper serialization strategy
+// that handles all supported types (Bool, Int, Double, arrays, structs, etc.)
 
 extension PropertyContainer: CustomDebugStringConvertible {
     public var debugDescription: String {

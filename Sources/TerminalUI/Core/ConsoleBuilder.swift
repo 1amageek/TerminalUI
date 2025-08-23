@@ -80,12 +80,19 @@ public struct TupleView<Content: Sendable>: ConsoleView {
             }
         }
         
-        let id = context.makeNodeID(for: "tuple")
+        let address = context.makeAddress(for: "tuple")
         return Node(
-            id: id,
+            address: address,
+            logicalID: nil,
             kind: .group,
-            children: children
+            children: children,
+            properties: PropertyContainer(),
+            parentAddress: context.currentParent
         )
+    }
+    
+    public var body: Never {
+        fatalError("TupleView is a primitive view")
     }
 }
 
@@ -112,5 +119,9 @@ public struct ConditionalContent<First: ConsoleView, Second: ConsoleView>: Conso
         case .second(let view):
             return view._makeNode(context: &context)
         }
+    }
+    
+    public var body: Never {
+        fatalError("ConditionalContent is a primitive view")
     }
 }

@@ -55,9 +55,6 @@ public actor AnimationScheduler {
         completion: (@Sendable () async -> Void)? = nil
     ) -> AnimationID {
 
-        cancelAnimation(id)
-        
-
         let task = Task { [weak self] in
             guard let self = self else { return }
             

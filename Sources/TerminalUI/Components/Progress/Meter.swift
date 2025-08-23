@@ -82,17 +82,13 @@ public struct Meter: ConsoleView {
             .with(.width, value: width)
             .with(.showValue, value: showValue)
             .with(.segments, value: segments)
-            .with(.colors, value: [
-                "low": colors.low.toHex(),
-                "medium": colors.medium.toHex(),
-                "high": colors.high.toHex(),
-                "critical": colors.critical.toHex()
-            ])
         
         return Node(
-            id: context.makeNodeID(),
+            address: context.makeAddress(for: "meter"),
+            logicalID: nil,
             kind: .meter,
-            properties: properties
+            properties: properties,
+            parentAddress: context.currentParent
         )
     }
 }
@@ -140,7 +136,7 @@ public struct MeterRenderer {
         let filledSegments = Int(Double(segments) * normalizedValue)
         
 
-        let color = getColor(for: normalizedValue, colors: node.properties[.colors])
+        let color = getColor(for: normalizedValue)
         
 
         commands.append(.write("["))
@@ -186,26 +182,16 @@ public struct MeterRenderer {
         return commands
     }
     
-    private func getColor(for value: Double, colors: [String: String]?) -> ANSIColor {
-        guard let colors = colors else {
-            return .semantic(.accent)
-        }
-        
-        let colorKey = if value > 0.9 {
-            "critical"
+    private func getColor(for value: Double) -> ANSIColor {
+        if value > 0.9 {
+            return .semantic(.error)
         } else if value > 0.7 {
-            "high"
+            return .semantic(.warning)
         } else if value > 0.3 {
-            "medium"
+            return .semantic(.accent)
         } else {
-            "low"
+            return .semantic(.success)
         }
-        
-        if let hex = colors[colorKey], let color = ANSIColor.fromHex(hex) {
-            return color
-        }
-        
-        return .semantic(.accent)
     }
 }
 
@@ -270,4 +256,8 @@ public extension Meter {
             colors: .temperature
         )
     }
+    public var body: Never {
+        fatalError("Meter is a primitive view")
+    }
+
 }

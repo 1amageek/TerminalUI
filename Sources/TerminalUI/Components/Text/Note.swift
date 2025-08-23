@@ -35,7 +35,7 @@ public struct Note: ConsoleView {
     }
     
     public func _makeNode(context: inout RenderContext) -> Node {
-        let id = context.makeNodeID(for: "note")
+        let address = context.makeAddress(for: "note")
         
         let properties = PropertyContainer()
             .with(.text, value: message)
@@ -44,10 +44,15 @@ public struct Note: ConsoleView {
             .with(.kind, value: String(describing: kind))
         
         return Node(
-            id: id,
+            address: address,
+            logicalID: nil,
             kind: .note,
             properties: properties,
-            parentID: context.currentParent
+            parentAddress: context.currentParent
         )
     }
+    public var body: Never {
+        fatalError("Note is a primitive view")
+    }
+
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-public struct TreeNode: Sendable {
+public struct TreeNode: Sendable, Identifiable {
     public let id: String
     public let label: String
     public let children: [TreeNode]
@@ -55,14 +55,16 @@ public struct Tree: ConsoleView {
         
 
         let treeItems = items.map { item in
-            TreeItem(
+            return TreeItem(
                 id: item.id,
                 label: item.label,
                 icon: item.icon,
-                children: [],
+                children: [],  // No dummy children needed
+                hasChildren: item.hasChildren,
                 isExpanded: item.isExpanded,
                 level: item.level,
-                linePrefix: item.linePrefix
+                linePrefix: item.linePrefix,
+                isLast: item.isLast
             )
         }
         
@@ -72,7 +74,13 @@ public struct Tree: ConsoleView {
             .with(.showLines, value: showLines)
             .with(.indentWidth, value: indentWidth)
         
-        return Node(id: context.makeNodeID(), kind: .tree, properties: properties)
+        return Node(
+            address: context.makeAddress(for: "tree"),
+            logicalID: nil,
+            kind: .tree,
+            properties: properties,
+            parentAddress: context.currentParent
+        )
     }
     
     public var body: Never {
@@ -192,8 +200,8 @@ public struct TreeRenderer {
         
         let level = item.level
         let isExpanded = item.isExpanded
-        let hasChildren = !item.children.isEmpty
-        let isLast = true
+        let hasChildren = item.hasChildren
+        let isLast = item.isLast
         let label = item.label
         let icon = item.icon
         let linePrefix = item.linePrefix
