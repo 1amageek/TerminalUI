@@ -1,67 +1,8 @@
 import Foundation
 
-public struct TableColumnDefinition: Sendable {
-    public let id: String
-    public let title: String
-    public let width: ColumnWidth
-    public let alignment: TextAlignment
-    
-    public init(
-        id: String,
-        title: String,
-        width: ColumnWidth = .auto,
-        alignment: TextAlignment = .left
-    ) {
-        self.id = id
-        self.title = title
-        self.width = width
-        self.alignment = alignment
-    }
-    
-    public enum ColumnWidth: Sendable {
-        case fixed(Int)
-        case percentage(Double)
-        case auto
-        case min(Int)
-        case max(Int)
-        case range(min: Int, max: Int)
-    }
-    
-    public enum TextAlignment: Sendable {
-        case left
-        case center
-        case right
-    }
-}
-
-public struct TableRowData: Sendable {
-    public let id: String
-    public let cells: [String: String]
-    public let style: RowStyle?
-    
-    public init(
-        id: String = UUID().uuidString,
-        cells: [String: String],
-        style: RowStyle? = nil
-    ) {
-        self.id = id
-        self.cells = cells
-        self.style = style
-    }
-    
-    public enum RowStyle: Sendable {
-        case normal
-        case highlighted
-        case muted
-        case success
-        case warning
-        case error
-    }
-}
-
 public struct Table: ConsoleView {
-    private let columns: [TableColumnDefinition]
-    private let rows: [TableRowData]
+    private let columns: [TableColumn]
+    private let rows: [TableRow]
     private let showHeader: Bool
     private let showBorder: Bool
     private let borderStyle: BorderStyle
@@ -69,8 +10,8 @@ public struct Table: ConsoleView {
     private let compact: Bool
     
     public init(
-        columns: [TableColumnDefinition],
-        rows: [TableRowData],
+        columns: [TableColumn],
+        rows: [TableRow],
         showHeader: Bool = true,
         showBorder: Bool = true,
         borderStyle: BorderStyle = .single,
@@ -99,25 +40,10 @@ public struct Table: ConsoleView {
         let widths = calculateColumnWidths(context: context)
         
 
-        let tableColumns = columns.map { col in
-            TableColumn(
-                title: col.title,
-                key: col.id,
-                width: widths[col.id],
-                alignment: TableAlignment(rawValue: alignmentString(col.alignment)) ?? .left
-            )
-        }
-        
-        let tableRows = rows.map { row in
-            TableRow(
-                cells: row.cells,
-                style: TableRowStyle(rawValue: styleString(row.style)) ?? .normal
-            )
-        }
-        
         let properties = PropertyContainer()
-            .with(.columns, value: tableColumns)
-            .with(.rows, value: tableRows)
+            .with(.columns, value: columns)
+            .with(.rows, value: rows)
+            .with(.columnWidths, value: widths)
             .with(.showHeader, value: showHeader)
             .with(.showBorder, value: showBorder)
             .with(.striped, value: striped)
@@ -144,7 +70,7 @@ public struct Table: ConsoleView {
         
 
         var fixedWidth = 0
-        var flexColumns: [TableColumnDefinition] = []
+        var flexColumns: [TableColumn] = []
         
         for column in columns {
             switch column.width {
@@ -184,7 +110,7 @@ public struct Table: ConsoleView {
         return widths
     }
     
-    private func calculateMinWidth(for column: TableColumnDefinition) -> Int {
+    private func calculateMinWidth(for column: TableColumn) -> Int {
         var minWidth = column.title.terminalWidth
         
 
@@ -200,24 +126,6 @@ public struct Table: ConsoleView {
     
 
     
-    private func alignmentString(_ alignment: TableColumnDefinition.TextAlignment) -> String {
-        switch alignment {
-        case .left: return "left"
-        case .center: return "center"
-        case .right: return "right"
-        }
-    }
-    
-    private func styleString(_ style: TableRowData.RowStyle?) -> String {
-        switch style {
-        case .normal, nil: return "normal"
-        case .highlighted: return "highlighted"
-        case .muted: return "muted"
-        case .success: return "success"
-        case .warning: return "warning"
-        case .error: return "error"
-        }
-    }
     
     private func borderStyleString(_ style: BorderStyle) -> String {
         switch style {
@@ -230,15 +138,8 @@ public struct Table: ConsoleView {
     }
 }
 
-public struct TableRenderer {
-    private let theme: Theme
-    
-    public init(theme: Theme = .default) {
-        self.theme = theme
-    }
-    
-
-    public func render(_ node: Node, at position: Point, width: Int) -> [RenderCommand] {
+extension Table {
+    static func render(_ node: Node, at position: Point, width: Int) -> [RenderCommand] {
         var commands: [RenderCommand] = []
         
         let showBorder = node.properties[.showBorder] ?? true
@@ -285,7 +186,7 @@ public struct TableRenderer {
         return commands
     }
     
-    private func getBorderChars(style: String) -> TableBorders {
+    private static func getBorderChars(style: String) -> TableBorders {
         switch style {
         case "double":
             return TableBorders.double
@@ -298,38 +199,40 @@ public struct TableRenderer {
         }
     }
     
-    private func drawTopBorder(at position: Point, width: Int, borders: TableBorders, commands: inout [RenderCommand]) {
+    private static func drawTopBorder(at position: Point, width: Int, borders: TableBorders, commands: inout [RenderCommand]) {
         commands.append(.moveCursor(row: position.y, column: position.x))
         commands.append(.write(borders.topLeft))
         commands.append(.write(String(repeating: borders.horizontal, count: width - 2)))
         commands.append(.write(borders.topRight))
     }
     
-    private func drawMiddleBorder(at position: Point, width: Int, borders: TableBorders, commands: inout [RenderCommand]) {
+    private static func drawMiddleBorder(at position: Point, width: Int, borders: TableBorders, commands: inout [RenderCommand]) {
         commands.append(.moveCursor(row: position.y, column: position.x))
         commands.append(.write(borders.middleLeft))
         commands.append(.write(String(repeating: borders.horizontal, count: width - 2)))
         commands.append(.write(borders.middleRight))
     }
     
-    private func drawBottomBorder(at position: Point, width: Int, borders: TableBorders, commands: inout [RenderCommand]) {
+    private static func drawBottomBorder(at position: Point, width: Int, borders: TableBorders, commands: inout [RenderCommand]) {
         commands.append(.moveCursor(row: position.y, column: position.x))
         commands.append(.write(borders.bottomLeft))
         commands.append(.write(String(repeating: borders.horizontal, count: width - 2)))
         commands.append(.write(borders.bottomRight))
     }
     
-    private func drawHeader(at position: Point, node: Node, borders: TableBorders, commands: inout [RenderCommand]) {
+    private static func drawHeader(at position: Point, node: Node, borders: TableBorders, commands: inout [RenderCommand]) {
         commands.append(.moveCursor(row: position.y, column: position.x))
         
         if borders.vertical != "" {
             commands.append(.write(borders.vertical))
         }
         
-        if let columns: [TableColumn] = node.properties[.columns] {
+        if let columns: [TableColumn] = node.properties[.columns],
+           let widths: [String: Int] = node.properties[.columnWidths] {
             for column in columns {
                 commands.append(.setStyle(.bold))
-                let padded = padText(column.title, width: column.width ?? 10, alignment: .center)
+                let width = widths[column.id] ?? 10
+                let padded = padText(column.title, width: width, alignment: .center)
                 commands.append(.write(padded))
                 commands.append(.reset)
                 
@@ -340,7 +243,7 @@ public struct TableRenderer {
         }
     }
     
-    private func drawRowTypeSafe(at position: Point, row: TableRow, node: Node, borders: TableBorders, isStriped: Bool, commands: inout [RenderCommand]) {
+    private static func drawRowTypeSafe(at position: Point, row: TableRow, node: Node, borders: TableBorders, isStriped: Bool, commands: inout [RenderCommand]) {
         commands.append(.moveCursor(row: position.y, column: position.x))
         
         if isStriped {
@@ -351,10 +254,12 @@ public struct TableRenderer {
             commands.append(.write(borders.vertical))
         }
         
-        if let columns: [TableColumn] = node.properties[.columns] {
+        if let columns: [TableColumn] = node.properties[.columns],
+           let widths: [String: Int] = node.properties[.columnWidths] {
             for column in columns {
-                let text = row.cells[column.key] ?? ""
-                let padded = padText(text, width: column.width ?? 10, alignment: tableAlignmentToLocal(column.alignment))
+                let text = row.cells[column.id] ?? ""
+                let width = widths[column.id] ?? 10
+                let padded = padText(text, width: width, alignment: column.alignment)
                 commands.append(.write(padded))
                 
                 if borders.vertical != "" {
@@ -367,7 +272,7 @@ public struct TableRenderer {
             commands.append(.reset)
         }
     }
-    private func padText(_ text: String, width: Int, alignment: TableColumnDefinition.TextAlignment) -> String {
+    private static func padText(_ text: String, width: Int, alignment: TextAlignment) -> String {
         let textWidth = text.terminalWidth
         guard textWidth < width else {
             return text.truncated(to: width)
@@ -376,32 +281,19 @@ public struct TableRenderer {
         let padding = width - textWidth
         
         switch alignment {
-        case .left:
+        case .left, .leading:
             return text + String(repeating: " ", count: padding)
-        case .right:
+        case .right, .trailing:
             return String(repeating: " ", count: padding) + text
         case .center:
             let leftPad = padding / 2
             let rightPad = padding - leftPad
             return String(repeating: " ", count: leftPad) + text + String(repeating: " ", count: rightPad)
+        case .justified:
+            return text + String(repeating: " ", count: padding)
         }
     }
     
-    private func tableAlignmentToLocal(_ alignment: TableAlignment) -> TableColumnDefinition.TextAlignment {
-        switch alignment {
-        case .left: return .left
-        case .center: return .center
-        case .right: return .right
-        }
-    }
-    
-    private func parseAlignment(_ str: String) -> TableColumnDefinition.TextAlignment {
-        switch str {
-        case "center": return .center
-        case "right": return .right
-        default: return .left
-        }
-    }
 }
 
 struct TableBorders {

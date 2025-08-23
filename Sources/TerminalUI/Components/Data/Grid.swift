@@ -1,32 +1,14 @@
 import Foundation
 
 public struct Grid: ConsoleView {
-    private let columns: [Column]
+    private let columns: [GridColumn]
     private let rows: [[String]]
     private let showHeaders: Bool
     private let showBorders: Bool
     private let alignment: TextAlignment
     
-    public struct Column: Sendable {
-        public let title: String
-        public let width: GridWidth
-        public let alignment: TextAlignment
-        
-        public init(title: String, width: GridWidth = .auto, alignment: TextAlignment = .leading) {
-            self.title = title
-            self.width = width
-            self.alignment = alignment
-        }
-    }
-    
-    public enum GridWidth: Sendable {
-        case auto
-        case fixed(Int)
-        case percentage(Double)
-    }
-    
     public init(
-        columns: [Column],
+        columns: [GridColumn],
         rows: [[String]],
         showHeaders: Bool = true,
         showBorders: Bool = true,
@@ -47,8 +29,8 @@ public struct Grid: ConsoleView {
         let gridColumns = columns.enumerated().map { (index, col) in
             GridColumn(
                 title: col.title,
-                width: columnWidths[index],
-                alignment: convertTextAlignmentToTableAlignment(col.alignment)
+                width: .fixed(columnWidths[index]),
+                alignment: col.alignment
             )
         }
         
@@ -83,57 +65,28 @@ public struct Grid: ConsoleView {
                 
             case .percentage(let percent):
                 widths[index] = Int(Double(availableWidth) * percent / 100.0)
+                
+            case .min, .max, .range:
+                widths[index] = availableWidth / columns.count
             }
         }
         
         return widths
     }
     
-    private func convertTextAlignmentToTableAlignment(_ alignment: TextAlignment) -> TableAlignment {
-        switch alignment {
-        case .leading, .left: return .left
-        case .center: return .center
-        case .trailing, .right: return .right
-        case .justified: return .left
-        }
-    }
-    
-    private func alignmentString(_ alignment: TextAlignment) -> String {
-        switch alignment {
-        case .leading: return "leading"
-        case .center: return "center"
-        case .trailing: return "trailing"
-        case .left: return "left"
-        case .right: return "right"
-        case .justified: return "justified"
-        }
-    }
-    
-    private func alignmentString(_ alignment: TableAlignment) -> String {
-        switch alignment {
-        case .left: return "left"
-        case .center: return "center"
-        case .right: return "right"
-        }
-    }
 }
 
-public struct GridRenderer {
-    private let theme: Theme
-    
-    public init(theme: Theme = .default) {
-        self.theme = theme
-    }
-    
-    private func alignmentString(_ alignment: TableAlignment) -> String {
+extension Grid {
+    private static func alignmentString(_ alignment: TextAlignment) -> String {
         switch alignment {
-        case .left: return "left"
+        case .leading, .left: return "left"
         case .center: return "center"
-        case .right: return "right"
+        case .trailing, .right: return "trailing"
+        case .justified: return "left"
         }
     }
     
-    public func render(_ node: Node, at position: Point, width: Int) -> [RenderCommand] {
+    static func render(_ node: Node, at position: Point, width: Int) -> [RenderCommand] {
         var commands: [RenderCommand] = []
         
         guard let gridData: GridData = node.properties[.gridData] else {
@@ -184,7 +137,7 @@ public struct GridRenderer {
         return commands
     }
     
-    private func drawRow(_ row: [String], columns: [GridColumn], at position: Point, isBold: Bool = false, commands: inout [RenderCommand]) {
+    private static func drawRow(_ row: [String], columns: [GridColumn], at position: Point, isBold: Bool = false, commands: inout [RenderCommand]) {
         commands.append(.moveCursor(row: position.y, column: position.x))
         
         if isBold {
@@ -194,7 +147,13 @@ public struct GridRenderer {
         var x = position.x
         
         for (index, column) in columns.enumerated() {
-            let width = column.width ?? 10
+            let width: Int
+            switch column.width {
+            case .fixed(let w): width = w
+            case .percentage(let p): width = Int(Double(position.x) * p / 100.0)
+            case .auto: width = 10
+            default: width = 10
+            }
             let alignment = alignmentString(column.alignment)
             let content = index < row.count ? row[index] : ""
             
@@ -216,7 +175,7 @@ public struct GridRenderer {
         }
     }
     
-    private func drawHorizontalBorder(at position: Point, columns: [GridColumn], isTop: Bool = false, isMiddle: Bool = false, isDivider: Bool = false, isBottom: Bool = false, commands: inout [RenderCommand]) {
+    private static func drawHorizontalBorder(at position: Point, columns: [GridColumn], isTop: Bool = false, isMiddle: Bool = false, isDivider: Bool = false, isBottom: Bool = false, commands: inout [RenderCommand]) {
         commands.append(.moveCursor(row: position.y, column: position.x))
         
         let (left, middle, right, horizontal) = if isTop {
@@ -234,7 +193,13 @@ public struct GridRenderer {
         commands.append(.write(left))
         
         for (index, column) in columns.enumerated() {
-            let width = column.width ?? 10
+            let width: Int
+            switch column.width {
+            case .fixed(let w): width = w
+            case .percentage(let p): width = Int(Double(position.x) * p / 100.0)
+            case .auto: width = 10
+            default: width = 10
+            }
             commands.append(.write(String(repeating: horizontal, count: width)))
             
             if index < columns.count - 1 {
@@ -245,7 +210,7 @@ public struct GridRenderer {
         commands.append(.write(right))
     }
     
-    private func alignText(_ text: String, width: Int, alignment: String) -> String {
+    private static func alignText(_ text: String, width: Int, alignment: String) -> String {
         let truncated = text.count > width ? String(text.prefix(width - 1)) + "…" : text
         let padding = width - truncated.count
         

@@ -153,128 +153,13 @@ public extension PropertyContainer.Key {
 
     static var columns: PropertyContainer.Key<[TableColumn]> { PropertyContainer.Key("columns") }
     static var rows: PropertyContainer.Key<[TableRow]> { PropertyContainer.Key("rows") }
+    static var columnWidths: PropertyContainer.Key<[String: Int]> { PropertyContainer.Key("columnWidths") }
     static var items: PropertyContainer.Key<[TreeItem]> { PropertyContainer.Key("items") }
     static var gridData: PropertyContainer.Key<GridData> { PropertyContainer.Key("gridData") }
     static var listItems: PropertyContainer.Key<[ListItemData]> { PropertyContainer.Key("listItems") }
     static var pairs: PropertyContainer.Key<[KeyValuePair]> { PropertyContainer.Key("pairs") }
 }
 
-public struct TableColumn: Sendable, Hashable {
-    public let title: String
-    public let key: String
-    public let width: Int?
-    public let alignment: TableAlignment
-    
-    public init(title: String, key: String, width: Int? = nil, alignment: TableAlignment = .left) {
-        self.title = title
-        self.key = key
-        self.width = width
-        self.alignment = alignment
-    }
-}
-
-public struct TableRow: Sendable, Hashable {
-    public let cells: [String: String]
-    public let style: TableRowStyle
-    
-    public init(cells: [String: String], style: TableRowStyle = .normal) {
-        self.cells = cells
-        self.style = style
-    }
-}
-
-public struct TreeItem: Sendable, Hashable {
-    public let id: String
-    public let label: String
-    public let icon: String?
-    public let children: [TreeItem]
-    public let isExpanded: Bool
-    public let level: Int
-    public let linePrefix: String
-    
-    public init(id: String, label: String, icon: String? = nil, children: [TreeItem] = [], isExpanded: Bool = false, level: Int = 0, linePrefix: String = "") {
-        self.id = id
-        self.label = label
-        self.icon = icon
-        self.children = children
-        self.isExpanded = isExpanded
-        self.level = level
-        self.linePrefix = linePrefix
-    }
-}
-
-public struct GridData: Sendable, Hashable {
-    public let columns: [GridColumn]
-    public let rows: [[String]]
-    
-    public init(columns: [GridColumn], rows: [[String]]) {
-        self.columns = columns
-        self.rows = rows
-    }
-}
-
-public struct GridColumn: Sendable, Hashable {
-    public let title: String
-    public let width: Int?
-    public let alignment: TableAlignment
-    
-    public init(title: String, width: Int? = nil, alignment: TableAlignment = .left) {
-        self.title = title
-        self.width = width
-        self.alignment = alignment
-    }
-}
-
-public struct ListItemData: Sendable, Hashable {
-    public let id: String
-    public let content: String
-    public let icon: String
-    public let badge: String
-    public let style: String
-    public let isSelected: Bool
-    public let bullet: String
-    
-    public init(
-        id: String,
-        content: String,
-        icon: String = "",
-        badge: String = "",
-        style: String = "normal",
-        isSelected: Bool = false,
-        bullet: String = ""
-    ) {
-        self.id = id
-        self.content = content
-        self.icon = icon
-        self.badge = badge
-        self.style = style
-        self.isSelected = isSelected
-        self.bullet = bullet
-    }
-}
-
-public struct KeyValuePair: Sendable, Hashable {
-    public let key: String
-    public let value: String
-    
-    public init(key: String, value: String) {
-        self.key = key
-        self.value = value
-    }
-}
-
-public enum TableAlignment: String, Sendable, CaseIterable {
-    case left
-    case center  
-    case right
-}
-
-public enum TableRowStyle: String, Sendable, CaseIterable {
-    case normal
-    case header
-    case highlighted
-    case dimmed
-}
 
 private protocol AnyPropertyKey {
     var name: String { get }

@@ -11,10 +11,8 @@ public actor TerminalRuntime {
     private var currentTree: Node?
     
 
-    private var previousTree: Node?
     
 
-    private let diffEngine: DiffEngine
     
 
     private let layoutEngine: LayoutEngine
@@ -39,7 +37,6 @@ public actor TerminalRuntime {
         let capabilities = Capabilities.detect()
         let theme = Theme.default
         
-        self.diffEngine = DiffEngine()
         self.layoutEngine = LayoutEngine()
         self.paintEngine = PaintEngine(theme: theme, capabilities: capabilities)
         
@@ -88,14 +85,7 @@ public actor TerminalRuntime {
         let layoutTree = layoutEngine.layout(tree, context: layoutContext)
         
 
-        let commands: [RenderCommand]
-        if previousTree != nil {
-
-            commands = [.clear] + paintEngine.paint(layoutTree)
-        } else {
-
-            commands = [.clear] + paintEngine.paint(layoutTree)
-        }
+        let commands: [RenderCommand] = [.clear] + paintEngine.paint(layoutTree)
         
 
         if debug {
@@ -106,7 +96,6 @@ public actor TerminalRuntime {
         await applyCommands(commands)
         
 
-        previousTree = currentTree
         currentTree = layoutTree
     }
     
@@ -210,6 +199,5 @@ public actor TerminalRuntime {
         
 
         currentTree = nil
-        previousTree = nil
     }
 }
