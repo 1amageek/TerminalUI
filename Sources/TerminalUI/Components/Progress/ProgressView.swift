@@ -67,7 +67,7 @@ public extension ProgressView {
         copy.showPercentage = show
         return copy
     }
-    public var body: Never {
+    var body: Never {
         fatalError("ProgressView is a primitive view")
     }
 

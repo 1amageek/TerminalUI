@@ -152,7 +152,7 @@ public extension Code {
         Code(content, language: "Shell", showLineNumbers: false)
     }
     
-    public var body: Never {
+    var body: Never {
         fatalError("Code is a primitive view")
     }
 }

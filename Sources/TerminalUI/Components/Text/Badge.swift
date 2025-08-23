@@ -42,7 +42,7 @@ public extension Badge {
         copy.inverted = value
         return copy
     }
-    public var body: Never {
+    var body: Never {
         fatalError("Badge is a primitive view")
     }
 

@@ -51,7 +51,7 @@ public extension Divider {
         copy.color = color
         return copy
     }
-    public var body: Never {
+    var body: Never {
         fatalError("Divider is a primitive view")
     }
 

@@ -256,7 +256,7 @@ public extension Meter {
             colors: .temperature
         )
     }
-    public var body: Never {
+    var body: Never {
         fatalError("Meter is a primitive view")
     }
 

@@ -97,7 +97,7 @@ public extension Spinner {
     static func syncing(_ label: String? = "Syncing...") -> Spinner {
         Spinner(label, style: .arc)
     }
-    public var body: Never {
+    var body: Never {
         fatalError("Spinner is a primitive view")
     }
 

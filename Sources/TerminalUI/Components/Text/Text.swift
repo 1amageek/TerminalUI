@@ -82,7 +82,7 @@ public extension Text {
         copy.isDim = true
         return copy
     }
-    public var body: Never {
+    var body: Never {
         fatalError("Text is a primitive view")
     }
 
