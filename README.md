@@ -16,6 +16,136 @@ A Swift library for building rich, interactive terminal user interfaces with a d
 - ⚡ **Async/Await** - Modern Swift concurrency with actor-based runtime
 - 🔧 **Type-Safe** - Compile-time safety with strong typing throughout
 
+## Visual Examples
+
+### Text Styling
+```swift
+Text("Hello, Terminal!")
+    .foreground(.cyan)
+    .bold()
+```
+**Output:**
+```
+Hello, Terminal!  # (displayed in cyan and bold)
+```
+
+### Progress Bar
+```swift
+ProgressView(label: "Downloading", value: 0.7)
+```
+**Output:**
+```
+Downloading  [████████████████████░░░░░░░░] 70%
+```
+
+### Spinner Animation
+```swift
+Spinner("Loading...")
+    .style(.dots)
+```
+**Output:**
+```
+⠋ Loading...  # (animated: ⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
+```
+
+### Panel with Content
+```swift
+Panel(title: "User Info") {
+    VStack {
+        Text("Name: John Doe")
+        Text("Email: john@example.com")
+        Text("Status: Active").foreground(.green)
+    }
+}
+```
+**Output:**
+```
+╭─ User Info ──────────────╮
+│ Name: John Doe           │
+│ Email: john@example.com  │
+│ Status: Active           │  # (Active in green)
+╰──────────────────────────╯
+```
+
+### Table Display
+```swift
+Table(headers: ["Name", "Role", "Status"]) {
+    TableRow {
+        TableCell("Alice")
+        TableCell("Admin")
+        TableCell("Online").foreground(.green)
+    }
+    TableRow {
+        TableCell("Bob")
+        TableCell("User")
+        TableCell("Away").foreground(.yellow)
+    }
+}
+```
+**Output:**
+```
+┌───────┬───────┬────────┐
+│ Name  │ Role  │ Status │
+├───────┼───────┼────────┤
+│ Alice │ Admin │ Online │  # (Online in green)
+│ Bob   │ User  │ Away   │  # (Away in yellow)
+└───────┴───────┴────────┘
+```
+
+### Notes and Badges
+```swift
+VStack(spacing: 1) {
+    Note("Build successful!", kind: .success)
+    Note("Memory usage high", kind: .warning)
+    HStack {
+        Badge("NEW").tint(.accent)
+        Badge("v2.0").tint(.info)
+    }
+}
+```
+**Output:**
+```
+✓ Build successful!          # (green with checkmark)
+⚠ Memory usage high          # (yellow with warning icon)
+[NEW] [v2.0]                 # (colored badges)
+```
+
+### List with Icons
+```swift
+List {
+    ListItem("✓ Task completed", style: .success)
+    ListItem("→ Task in progress", style: .info)
+    ListItem("✗ Task failed", style: .error)
+}
+```
+**Output:**
+```
+  • ✓ Task completed         # (green)
+  • → Task in progress       # (blue)
+  • ✗ Task failed           # (red)
+```
+
+### Meter Display
+```swift
+VStack {
+    Text("CPU Usage:")
+    Meter(value: 0.75, width: 30)
+        .style(.blocks)
+    
+    Text("Memory:")
+    Meter(value: 0.45, width: 30)
+        .style(.gradient)
+}
+```
+**Output:**
+```
+CPU Usage:
+█████████████████████▒▒▒▒▒▒▒▒  75%
+
+Memory:
+████████████▓▓▓▒▒▒░░░░░░░░░░░  45%
+```
+
 ## Installation
 
 Add TerminalUI to your `Package.swift`:
