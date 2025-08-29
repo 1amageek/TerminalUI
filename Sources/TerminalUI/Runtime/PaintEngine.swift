@@ -1,6 +1,6 @@
 import Foundation
 
-public struct PaintEngine {
+public struct PaintEngine: Sendable {
     private let theme: Theme
     private let capabilities: Capabilities
     
