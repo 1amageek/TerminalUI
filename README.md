@@ -70,22 +70,6 @@ VStack {
 }
 ```
 
-## Recent Changes
-
-### ✨ New Components Added
-- **Spacer** - Flexible space that expands to fill available area
-- **Button** - Interactive button with keyboard shortcut support
-- **Selector** - Selection UI for multiple options with ForEach-like syntax
-
-### 🗑️ Components Removed
-To streamline the library and follow terminal UI best practices, the following redundant components were removed:
-- **Badge** - Use Text with styling instead
-- **Code** - Use Text with monospace font instead  
-- **Note** - Use Text with semantic colors instead
-- **Grid** - Use Table for structured data display
-- **KeyValue** - Use HStack with Text components instead
-- **Meter** - Use ProgressView for progress indication
-
 ## Component Library (14 Total Components)
 
 ### Layout Components (7)
