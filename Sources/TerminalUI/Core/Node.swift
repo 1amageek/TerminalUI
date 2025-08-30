@@ -61,15 +61,10 @@ public enum NodeKind: String, Sendable, CaseIterable {
     case group
     case panel
     case divider
-    case grid
-    case keyvalue
+    case spacer
     
     // Text
     case text
-    case code
-    case badge
-    case tag
-    case note
     case list
     
     // Data
@@ -79,21 +74,11 @@ public enum NodeKind: String, Sendable, CaseIterable {
     // Progress
     case progress
     case spinner
-    case meter
-    case gauge
     
     // Input
     case textfield
-    case textarea
-    
-    // Visual
-    case image
-    case sparkline
-    
-    // Effects
-    case shimmer
-    case blink
-    case pulse
+    case button
+    case selector
 }
 
 // MARK: - Node

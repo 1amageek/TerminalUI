@@ -141,7 +141,7 @@ struct LiveSessionTests {
         await session.update("status", at: Point(x: 0, y: 5), with: Panel(title: "Status") {
             HStack {
                 Text("Status:")
-                Badge("Active").tint(.semantic(.success))
+                Text("Active").foreground(.semantic(.success)).bold()
             }
         })
         

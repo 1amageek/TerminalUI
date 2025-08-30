@@ -107,37 +107,6 @@ func testProgressIndeterminate() async throws {
     #expect(node.prop(.indeterminate, as: Bool.self) == true)
 }
 
-@Test("Badge creation")
-func testBadge() async throws {
-    let badge = Badge("NEW").tint(.semantic(.success))
-    
-    var context = RenderContext()
-    let node = badge._makeNode(context: &context)
-    
-    #expect(node.kind == .badge)
-    #expect(node.prop(.text, as: String.self) == "NEW")
-    #expect(node.prop(.tint, as: String.self) != nil)
-}
-
-@Test("Note with different kinds")
-func testNote() async throws {
-    let notes = [
-        Note("Info", kind: .info),
-        Note("Success", kind: .success),
-        Note("Warning", kind: .warning),
-        Note("Error", kind: .error)
-    ]
-    
-    for note in notes {
-        var context = RenderContext()
-        let node = note._makeNode(context: &context)
-        
-        #expect(node.kind == .note)
-        #expect(node.prop(.text, as: String.self) != nil)
-        #expect(node.prop(.icon, as: String.self) != nil)
-    }
-}
-
 @Test("Divider styles")
 func testDivider() async throws {
     let dividers = [

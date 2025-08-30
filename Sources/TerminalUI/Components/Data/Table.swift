@@ -85,7 +85,7 @@ public struct Table: ConsoleView {
                 widths[column.id] = w
                 fixedWidth += w
             case .percentage(let pct):
-                // pct: 0–100 を想定（Grid と統一）
+                // pct: 0-100 (unified with Grid)
                 let borders = showBorder ? (columns.count + 1) : 0
                 let avail = totalWidth - borders
                 let w = Int((pct / 100.0) * Double(avail))

@@ -4,16 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TerminalUI is a Swift library for creating rich terminal interfaces with declarative DSL, built on top of swift-distributed-tracing. It provides colored text, progress bars, loading spinners, shimmer effects, and other visual elements that can be attached to tracing spans as fragment views.
+TerminalUI is a Swift library for creating rich terminal interfaces with a SwiftUI-like declarative DSL. It provides components for text, layout, data display, progress indicators, and input handling, all rendered to the terminal with ANSI escape sequences. The library includes optional distributed tracing support via swift-distributed-tracing for observability.
 
 ## Key Design Principles
 
-1. **Independent Library**: TerminalUI depends ONLY on swift-distributed-tracing, not SwiftAgent
-2. **Declarative DSL**: SwiftUI-like lightweight DSL for building terminal UIs
-3. **Immutable Value Types**: All views are immutable and optimized for differential rendering
-4. **Non-blocking**: All operations are async and non-blocking with actor-based runtime
-5. **Tracing Integration**: All rendering emits structured events to spans for observability
-6. **ID/Address Separation**: Logical IDs for stable identity in diffing, Addresses for hierarchical position
+1. **Declarative DSL**: SwiftUI-like syntax for building terminal UIs
+2. **Immutable Value Types**: All views are immutable and optimized for differential rendering
+3. **Non-blocking**: All operations are async and non-blocking with actor-based runtime
+4. **ID/Address Separation**: Logical IDs for stable identity in diffing, Addresses for hierarchical position
+5. **Tracing Integration**: Optional observability through swift-distributed-tracing (ConsoleSession)
+6. **Thread Safety**: Sendable conformance and actor isolation for safe concurrent use
 
 ## Build and Development Commands
 
@@ -56,6 +56,7 @@ swift package update
 3. **RenderContext**
    - Maintains rendering state during node generation
    - Tracks path hierarchy for address generation
+   - Tracks list depth for nested list indentation
    - Validates unique logical IDs in DEBUG builds
 
 4. **Reconciler**
@@ -71,30 +72,37 @@ swift package update
 
 6. **Renderers**
    - ANSIRenderer: TTY output with ANSI escape codes
-   - JSONRenderer: Structured output for IDEs/logging
-   - TracingRenderer: Span event emission
+   - Component-specific renderers (ListRenderer, TreeRenderer, etc.)
 
 ### Component Structure
 
-**Layout Components**
-- `VStack`, `HStack`, `ZStack`: Container views implementing `ContainerView` protocol
-- `Spacer`, `Divider`: Layout primitives
-- `Panel`, `Group`: Organizational containers
+**Layout Components (7)**
+- `VStack`, `HStack`: Container views implementing `ContainerView` protocol
+- `Spacer`: Flexible space that expands
+- `Divider`: Horizontal line separator
+- `Panel`: Box with optional border and title
+- `Group`: Logical grouping without visual representation
+- `EmptyView`: View that renders nothing
 
-**Data Components**
-- `ForEach`: Requires stable IDs via `id:` parameter or `Identifiable` conformance
-- `List`, `Table`: Collection displays
-- `KeyValue`: Key-value pair display
+**Text Components (2)**
+- `Text`: Basic text with style modifiers (foreground, background, bold, italic, underline, dim)
+- `List`: Display items in various list styles (plain, bulleted, numbered, checkbox, definition)
 
-**Text Components**
-- `Text`: Basic text with style modifiers
-- `Badge`, `Note`: Semantic text displays
-- `Code`: Syntax-highlighted code blocks
+**Data Components (2)**
+- `Table`: Tabular data with columns and rows
+- `Tree`: Hierarchical tree structure display
 
-**Progress Components**
-- `ProgressView`: Determinate/indeterminate progress
-- `Spinner`: Animated loading indicators
-- `Meter`: Visual progress meters
+**Progress Components (2)**
+- `ProgressView`: Determinate/indeterminate progress bars
+- `Spinner`: Animated loading indicators with customizable frames
+
+**Input Components (3)**
+- `TextField`: Text input field with validation support
+- `Button`: Interactive button with keyboard shortcuts
+- `Selector`: Selection UI for multiple options
+
+**Control Flow**
+- `ForEach`: Iterate over collections with stable IDs via `id:` parameter or `Identifiable` conformance
 
 ### ForEach Requirements
 
@@ -106,16 +114,16 @@ ForEach requires stable IDs for all elements:
 
 ### Property System
 
-Properties use type-safe keys:
+Properties use type-safe keys with computed properties:
 ```swift
 extension PropertyContainer.Key {
-    static let text = Key<String>("text")
-    static let foreground = Key<String>("foreground")
+    static var text: PropertyContainer.Key<String> { PropertyContainer.Key("text") }
+    static var foreground: PropertyContainer.Key<String> { PropertyContainer.Key("foreground") }
     // etc.
 }
 ```
 
-Access via: `node.prop(.text, as: String.self)`
+Access via: `node.prop(.text, as: String.self)` or `node.properties[.text]`
 
 ## Testing Strategy
 
@@ -139,21 +147,48 @@ Access via: `node.prop(.text, as: String.self)`
 - Detect capabilities via COLORTERM, TERM env vars
 - Theme system for semantic colors
 
-## Tracing Event Schema
+## NodeKind Enum
 
-All UI operations emit events with name `"terminalui.render"` and attributes:
-- `ui.op`: Operation type
-- `ui.node_type`: Component type
-- `ui.address`: Node address
-- `ui.logical_id`: Stable identifier (if present)
-- `ui.version`: Schema version
-- `ui.color_mode`: Color capability
+The complete list of supported node types (14 total):
+```swift
+public enum NodeKind: String, Sendable, CaseIterable {
+    // Layout (7)
+    case empty, vstack, hstack, group, panel, divider, spacer
+    
+    // Text (2)
+    case text, list
+    
+    // Data (2)
+    case table, tree
+    
+    // Progress (2)
+    case progress, spinner
+    
+    // Input (3)
+    case textfield, button, selector
+}
+```
 
-## SwiftAgent Integration
+## View Modifiers and Effects
 
-Create a separate target `TerminalUIAdapterSwiftAgent` (not in core) that provides:
-- SpanModifier
-- RenderModifier  
-- StatusModifier
+**Style Modifiers** (Text)
+- `.foreground(_:)`: Text color
+- `.background(_:)`: Background color
+- `.bold()`, `.italic()`, `.underline()`, `.dim()`: Text styles
 
-These allow SwiftAgent Steps to use TerminalUI without core dependency.
+**Effects** (via ViewModifiers, not NodeKind)
+- `.blink()`: Blinking effect
+- `.shimmer()`: Shimmer animation
+- `.pulse()`: Pulsing animation
+
+## Live Rendering
+
+For dynamic updates without full screen refresh:
+```swift
+let renderer = LiveRenderer()
+await renderer.render(view)
+
+// Or use LiveSession for multiple elements
+let session = LiveSession()
+await session.update("element-id", at: Point(x: 0, y: 5), with: view)
+```

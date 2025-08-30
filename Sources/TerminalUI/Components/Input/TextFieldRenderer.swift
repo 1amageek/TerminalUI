@@ -17,7 +17,6 @@ public struct TextFieldRenderer {
         let text = node.prop(.text, as: String.self) ?? ""
         let placeholder = node.prop(.placeholder, as: String.self)
         let isFocused = node.properties[.focused] ?? false
-        // TextField が入れた "validation" を読む（Key は名前と型で同値）
         let validation: String? = node.properties[PropertyContainer.Key<String>("validation")]
         let caretColumn = text.terminalWidth
         

@@ -19,11 +19,15 @@ public struct RenderContext: Sendable {
     /// Current path components for address generation
     internal private(set) var currentPath: [String] = []
     
+    /// Current list nesting depth
+    public private(set) var listDepth: Int = 0
+    
     /// Current animation frame
     public let frame: Int
     
     /// Session configuration options
     public let options: SessionOptions
+    
     
     public init(
         terminalWidth: Int = 80,
@@ -74,6 +78,16 @@ public struct RenderContext: Sendable {
         _ = parentStack.popLast()
     }
     
+    /// Push a list depth level
+    public mutating func pushListDepth() {
+        listDepth += 1
+    }
+    
+    /// Pop a list depth level
+    public mutating func popListDepth() {
+        listDepth = max(0, listDepth - 1)
+    }
+    
 
     public func with(
         terminalWidth: Int? = nil,
@@ -95,6 +109,7 @@ public struct RenderContext: Sendable {
         // Preserve internal state
         newContext.parentStack = self.parentStack
         newContext.currentPath = self.currentPath
+        newContext.listDepth = self.listDepth
         
         return newContext
     }
@@ -205,7 +220,7 @@ public struct Capabilities: Sendable {
     }
 }
 
-// Terminal size 取得のプラットフォーム分岐
+// Platform-specific terminal size retrieval
 #if os(macOS)
 import Darwin
 

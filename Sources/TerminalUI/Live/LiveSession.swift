@@ -1,8 +1,8 @@
 import Foundation
 import Synchronization
 
-/// 複数のUI要素を独立して更新管理
-/// 例: ビルドタスクリスト、並行ダウンロード状況など
+/// Manages independent updates of multiple UI elements
+/// Example: build task lists, parallel download statuses
 public actor LiveSession {
     private let runtime: TerminalRuntime
     private let paintEngine: PaintEngine
@@ -30,11 +30,6 @@ public actor LiveSession {
         self.reconciler = Reconciler()
     }
     
-    /// 要素を追加/更新
-    /// - Parameters:
-    ///   - id: 要素の識別子（例: "task-1", "download-file.zip"）
-    ///   - view: 表示するビュー
-    ///   - position: 表示位置（省略時は自動配置）
     public func update<V: ConsoleView>(
         _ id: String,
         at position: Point? = nil,
@@ -49,7 +44,6 @@ public actor LiveSession {
         
         let node = view._makeNode(context: &context)
         
-        // 既存要素の更新か新規追加かを判定
         let previousNode: Node?
         let address: Address
         
@@ -74,24 +68,19 @@ public actor LiveSession {
             )
         }
         
-        // コマンド生成
         var commands: [RenderCommand] = []
         
-        // 位置移動
         if let pos = elements[id]?.position {
             commands.append(.moveCursor(row: pos.y, column: pos.x))
         }
         
-        // 差分レンダリングまたは新規レンダリング
         if let previous = previousNode {
-            // 差分レンダリング
             let reconciliation = reconciler.reconcile(
                 oldTree: previous,
                 newTree: node
             )
             
             if reconciliation.hasChanges {
-                // 変更がある場合のみ更新
                 let incrementalCommands = generateIncrementalCommands(
                     reconciliation: reconciliation,
                     newTree: node
@@ -99,35 +88,28 @@ public actor LiveSession {
                 commands.append(contentsOf: incrementalCommands)
             }
         } else {
-            // 新規レンダリング
             commands.append(.begin(address, node.kind, parent: nil))
             commands.append(contentsOf: paintEngine.paint(node))
         }
         
-        // コマンド適用
         if !commands.isEmpty {
             await runtime.applyCommands(commands)
         }
     }
     
-    /// 要素を削除
     public func remove(_ id: String) async {
         guard let element = elements.removeValue(forKey: id) else { return }
         
-        // 削除コマンドを発行
         await runtime.applyCommands([.end(element.address)])
         
-        // 必要に応じて画面を再描画
         if !elements.isEmpty {
             await redrawAll()
         }
     }
     
-    /// 全体を再描画
     public func redrawAll() async {
         var commands: [RenderCommand] = [.clear]
         
-        // 全要素を位置順にソート
         let sortedElements = elements.values.sorted { a, b in
             guard let posA = a.position, let posB = b.position else { return false }
             if posA.y != posB.y {
@@ -136,7 +118,6 @@ public actor LiveSession {
             return posA.x < posB.x
         }
         
-        // 各要素を再描画
         for element in sortedElements {
             if let node = element.lastNode, let position = element.position {
                 commands.append(.moveCursor(row: position.y, column: position.x))
@@ -147,57 +128,48 @@ public actor LiveSession {
         await runtime.applyCommands(commands)
     }
     
-    /// 全要素をクリア
     public func clear() async {
         elements.removeAll()
         await runtime.applyCommands([.clear])
     }
     
-    /// 指定IDの要素を取得
     public func getView(_ id: String) -> (any ConsoleView)? {
         elements[id]?.view
     }
     
-    /// 指定IDの要素の位置を取得
     public func getPosition(_ id: String) -> Point? {
         elements[id]?.position
     }
     
-    /// 要素の位置を変更
     public func move(_ id: String, to position: Point) async {
         guard var element = elements[id] else { return }
         element.position = position
         elements[id] = element
         
-        // 再描画
         await redrawAll()
     }
     
-    /// 全要素のIDを取得
     public func getAllIDs() -> [String] {
         Array(elements.keys)
     }
     
-    /// 要素数を取得
     public var count: Int {
         elements.count
     }
     
     // MARK: - Private Helpers
     
-    /// 差分に基づくインクリメンタルコマンドを生成
+    /// Generate incremental commands based on diff
     private func generateIncrementalCommands(
         reconciliation: Reconciler.ReconciliationResult,
         newTree: Node
     ) -> [RenderCommand] {
         var commands: [RenderCommand] = []
         
-        // 削除処理
         for deletion in reconciliation.deletions {
             commands.append(.end(deletion.node.address))
         }
         
-        // 移動処理
         for move in reconciliation.moves {
             if case .move(let from, let to) = move.type {
                 commands.append(.end(from))
@@ -206,14 +178,11 @@ public actor LiveSession {
             }
         }
         
-        // 更新処理
         for update in reconciliation.updates {
-            // 行をクリアしてから再描画
             commands.append(.clearLine)
             commands.append(contentsOf: paintEngine.paint(update.node))
         }
         
-        // 挿入処理
         for insertion in reconciliation.insertions {
             commands.append(.begin(
                 insertion.node.address,

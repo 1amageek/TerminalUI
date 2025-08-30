@@ -1,7 +1,7 @@
 import Foundation
 
-/// リアルタイムUI更新のための公開レンダラー
-/// 長時間実行プロセスやストリーミングデータの表示に使用
+/// Public renderer for real-time UI updates
+/// Used for long-running processes and streaming data
 public struct LiveRenderer: Sendable {
     private let runtime: TerminalRuntime
     private let paintEngine: PaintEngine
@@ -19,9 +19,6 @@ public struct LiveRenderer: Sendable {
         self.paintEngine = PaintEngine(theme: theme, capabilities: self.capabilities)
     }
     
-    /// ConsoleViewを即座にレンダリング
-    /// - Parameter view: 表示するビュー
-    /// - Note: ストリーミングテキストやプログレス表示の更新に使用
     public func render<V: ConsoleView>(_ view: V) async {
         var context = RenderContext(
             terminalWidth: capabilities.width,
@@ -34,12 +31,11 @@ public struct LiveRenderer: Sendable {
         await runtime.applyCommands(commands)
     }
     
-    /// 画面をクリア
     public func clear() async {
         await runtime.applyCommands([.clear])
     }
     
-    /// カーソル位置にテキストを上書き（ちらつき防止）
+    /// Overwrite text at cursor position (prevents flickering)
     public func update<V: ConsoleView>(at position: Point, view: V) async {
         var commands: [RenderCommand] = []
         commands.append(.saveCursor)
@@ -58,47 +54,38 @@ public struct LiveRenderer: Sendable {
         await runtime.applyCommands(commands)
     }
     
-    /// 画面全体をリセット
     public func reset() async {
         await runtime.reset()
     }
     
-    /// 現在のカーソル位置を保存
     public func saveCursor() async {
         await runtime.applyCommands([.saveCursor])
     }
     
-    /// 保存したカーソル位置を復元
     public func restoreCursor() async {
         await runtime.applyCommands([.restoreCursor])
     }
     
-    /// カーソルを非表示にする
     public func hideCursor() async {
         await runtime.applyCommands([.hideCursor])
     }
     
-    /// カーソルを表示する
     public func showCursor() async {
         await runtime.applyCommands([.showCursor])
     }
     
-    /// 現在の行をクリア
     public func clearLine() async {
         await runtime.applyCommands([.clearLine])
     }
     
-    /// 行末までクリア
     public func clearToEndOfLine() async {
         await runtime.applyCommands([.clearToEndOfLine])
     }
     
-    /// カーソルを移動
     public func moveCursor(to position: Point) async {
         await runtime.applyCommands([.moveCursor(row: position.y, column: position.x)])
     }
     
-    /// フラッシュ（バッファ内容を強制出力）
     public func flush() async {
         await runtime.applyCommands([.flush])
     }

@@ -276,7 +276,7 @@ struct ForEachTests {
                         Divider()
                         HStack {
                             Text("Value:")
-                            Badge("\(item.value)")
+                            Text("\(item.value)").bold()
                         }
                     }
                 }

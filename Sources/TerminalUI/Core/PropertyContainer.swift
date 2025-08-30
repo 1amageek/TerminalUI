@@ -115,8 +115,6 @@ public extension PropertyContainer.Key {
     static var frameIndex: PropertyContainer.Key<Int> { PropertyContainer.Key("frameIndex") }
     static var min: PropertyContainer.Key<Double> { PropertyContainer.Key("min") }
     static var max: PropertyContainer.Key<Double> { PropertyContainer.Key("max") }
-    static var normalizedValue: PropertyContainer.Key<Double> { PropertyContainer.Key("normalizedValue") }
-    static var segments: PropertyContainer.Key<Int> { PropertyContainer.Key("segments") }
     static var indentWidth: PropertyContainer.Key<Int> { PropertyContainer.Key("indentWidth") }
     static var percentage: PropertyContainer.Key<Int> { PropertyContainer.Key("percentage") }
     static var x: PropertyContainer.Key<Int> { PropertyContainer.Key("x") }
@@ -139,7 +137,6 @@ public extension PropertyContainer.Key {
     static var showIcons: PropertyContainer.Key<Bool> { PropertyContainer.Key("showIcons") }
     static var showLines: PropertyContainer.Key<Bool> { PropertyContainer.Key("showLines") }
     static var showBadges: PropertyContainer.Key<Bool> { PropertyContainer.Key("showBadges") }
-    static var inverted: PropertyContainer.Key<Bool> { PropertyContainer.Key("inverted") }
     static var bold: PropertyContainer.Key<Bool> { PropertyContainer.Key("bold") }
     static var italic: PropertyContainer.Key<Bool> { PropertyContainer.Key("italic") }
     static var underline: PropertyContainer.Key<Bool> { PropertyContainer.Key("underline") }
@@ -173,9 +170,7 @@ public extension PropertyContainer.Key {
     static var columnWidths: PropertyContainer.Key<[String: Int]> { PropertyContainer.Key("columnWidths") }
     static var borderStyle: PropertyContainer.Key<String> { PropertyContainer.Key("borderStyle") }
     static var items: PropertyContainer.Key<[TreeItem]> { PropertyContainer.Key("items") }
-    static var gridData: PropertyContainer.Key<GridData> { PropertyContainer.Key("gridData") }
     static var listItems: PropertyContainer.Key<[ListItemData]> { PropertyContainer.Key("listItems") }
-    static var pairs: PropertyContainer.Key<[KeyValuePair]> { PropertyContainer.Key("pairs") }
 }
 
 
@@ -187,32 +182,6 @@ extension PropertyContainer.Key: AnyPropertyKey {
 
 }
 
-public extension PropertyContainer {
-
-    struct Builder {
-        internal var container = PropertyContainer()
-        
-        public init() {}
-        
-        internal init(container: PropertyContainer) {
-            self.container = container
-        }
-        
-        public mutating func set<Value: Sendable>(_ key: PropertyContainer.Key<Value>, _ value: Value) -> Builder {
-            container = container.with(key, value: value)
-            return self
-        }
-        
-        public func build() -> PropertyContainer {
-            container
-        }
-    }
-    
-
-    func builder() -> Builder {
-        Builder(container: self)
-    }
-}
 
 // MARK: - Codable support removed
 // PropertyContainer's Codable support has been removed because it only handled String values.

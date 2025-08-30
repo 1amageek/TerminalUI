@@ -53,21 +53,6 @@ public struct TableRow: Sendable, Hashable, Identifiable {
     }
 }
 
-public struct GridColumn: Sendable, Hashable {
-    public let title: String
-    public let width: ColumnWidth
-    public let alignment: TextAlignment
-    
-    public init(
-        title: String,
-        width: ColumnWidth = .auto,
-        alignment: TextAlignment = .leading
-    ) {
-        self.title = title
-        self.width = width
-        self.alignment = alignment
-    }
-}
 
 public struct TreeItem: Sendable, Hashable, Identifiable {
     public let id: String
@@ -104,15 +89,6 @@ public struct TreeItem: Sendable, Hashable, Identifiable {
     }
 }
 
-public struct GridData: Sendable, Hashable {
-    public let columns: [GridColumn]
-    public let rows: [[String]]
-    
-    public init(columns: [GridColumn], rows: [[String]]) {
-        self.columns = columns
-        self.rows = rows
-    }
-}
 
 public struct ListItemData: Sendable, Hashable {
     public let id: String
@@ -142,13 +118,4 @@ public struct ListItemData: Sendable, Hashable {
     }
 }
 
-public struct KeyValuePair: Sendable, Hashable {
-    public let key: String
-    public let value: String
-    
-    public init(key: String, value: String) {
-        self.key = key
-        self.value = value
-    }
-}
 

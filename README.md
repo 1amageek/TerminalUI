@@ -2,7 +2,7 @@
 
 A Swift library for building rich, interactive terminal user interfaces with a declarative SwiftUI-like DSL.
 
-![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)
+![Swift](https://img.shields.io/badge/Swift-6.0+-orange.svg)
 ![Platform](https://img.shields.io/badge/Platform-macOS%20|%20Linux-lightgray.svg)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 
@@ -10,141 +10,11 @@ A Swift library for building rich, interactive terminal user interfaces with a d
 
 - 🎨 **Declarative DSL** - Build terminal UIs with a familiar SwiftUI-like syntax
 - 🚀 **High Performance** - Efficient differential rendering with reconciliation
-- 🎭 **Rich Components** - Text styling, progress bars, spinners, tables, and more
+- 🎭 **Streamlined Components** - Essential terminal UI components without bloat (14 total)
 - 🌈 **Smart Color Support** - Automatic fallback from TrueColor → 256 → 16 colors
-- 📊 **Tracing Integration** - Built on swift-distributed-tracing for observability
+- 📊 **Tracing Integration** - Optional observability via swift-distributed-tracing
 - ⚡ **Async/Await** - Modern Swift concurrency with actor-based runtime
-- 🔧 **Type-Safe** - Compile-time safety with strong typing throughout
-
-## Visual Examples
-
-### Text Styling
-```swift
-Text("Hello, Terminal!")
-    .foreground(.cyan)
-    .bold()
-```
-**Output:**
-```
-Hello, Terminal!  # (displayed in cyan and bold)
-```
-
-### Progress Bar
-```swift
-ProgressView(label: "Downloading", value: 0.7)
-```
-**Output:**
-```
-Downloading  [████████████████████░░░░░░░░] 70%
-```
-
-### Spinner Animation
-```swift
-Spinner("Loading...")
-    .style(.dots)
-```
-**Output:**
-```
-⠋ Loading...  # (animated: ⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
-```
-
-### Panel with Content
-```swift
-Panel(title: "User Info") {
-    VStack {
-        Text("Name: John Doe")
-        Text("Email: john@example.com")
-        Text("Status: Active").foreground(.green)
-    }
-}
-```
-**Output:**
-```
-╭─ User Info ──────────────╮
-│ Name: John Doe           │
-│ Email: john@example.com  │
-│ Status: Active           │  # (Active in green)
-╰──────────────────────────╯
-```
-
-### Table Display
-```swift
-Table(headers: ["Name", "Role", "Status"]) {
-    TableRow {
-        TableCell("Alice")
-        TableCell("Admin")
-        TableCell("Online").foreground(.green)
-    }
-    TableRow {
-        TableCell("Bob")
-        TableCell("User")
-        TableCell("Away").foreground(.yellow)
-    }
-}
-```
-**Output:**
-```
-┌───────┬───────┬────────┐
-│ Name  │ Role  │ Status │
-├───────┼───────┼────────┤
-│ Alice │ Admin │ Online │  # (Online in green)
-│ Bob   │ User  │ Away   │  # (Away in yellow)
-└───────┴───────┴────────┘
-```
-
-### Notes and Badges
-```swift
-VStack(spacing: 1) {
-    Note("Build successful!", kind: .success)
-    Note("Memory usage high", kind: .warning)
-    HStack {
-        Badge("NEW").tint(.accent)
-        Badge("v2.0").tint(.info)
-    }
-}
-```
-**Output:**
-```
-✓ Build successful!          # (green with checkmark)
-⚠ Memory usage high          # (yellow with warning icon)
-[NEW] [v2.0]                 # (colored badges)
-```
-
-### List with Icons
-```swift
-List {
-    ListItem("✓ Task completed", style: .success)
-    ListItem("→ Task in progress", style: .info)
-    ListItem("✗ Task failed", style: .error)
-}
-```
-**Output:**
-```
-  • ✓ Task completed         # (green)
-  • → Task in progress       # (blue)
-  • ✗ Task failed           # (red)
-```
-
-### Meter Display
-```swift
-VStack {
-    Text("CPU Usage:")
-    Meter(value: 0.75, width: 30)
-        .style(.blocks)
-    
-    Text("Memory:")
-    Meter(value: 0.45, width: 30)
-        .style(.gradient)
-}
-```
-**Output:**
-```
-CPU Usage:
-█████████████████████▒▒▒▒▒▒▒▒  75%
-
-Memory:
-████████████▓▓▓▒▒▒░░░░░░░░░░░  45%
-```
+- 🔧 **Type-Safe** - Compile-time safety with strong typing and Sendable conformance
 
 ## Installation
 
@@ -152,7 +22,7 @@ Add TerminalUI to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/1amageek/TerminalUI.git", from: "1.0.0")
+    .package(url: "https://github.com/yourusername/TerminalUI.git", from: "1.0.0")
 ]
 ```
 
@@ -187,7 +57,6 @@ VStack {
     Text("Terminal UI").bold()
     Divider()
     Text("Build beautiful terminal interfaces")
-    Badge("NEW").tint(.success)
 }
 
 // Data display with ForEach
@@ -200,9 +69,33 @@ VStack {
 }
 ```
 
-## Component Library
+## Recent Changes
 
-### Layout Components
+### ✨ New Components Added
+- **Spacer** - Flexible space that expands to fill available area
+- **Button** - Interactive button with keyboard shortcut support
+- **Selector** - Selection UI for multiple options with ForEach-like syntax
+
+### 🗑️ Components Removed
+To streamline the library and follow terminal UI best practices, the following redundant components were removed:
+- **Badge** - Use Text with styling instead
+- **Code** - Use Text with monospace font instead  
+- **Note** - Use Text with semantic colors instead
+- **Grid** - Use Table for structured data display
+- **KeyValue** - Use HStack with Text components instead
+- **Meter** - Use ProgressView for progress indication
+
+## Component Library (14 Total Components)
+
+### Layout Components (7)
+
+- **VStack** - Vertical stacking container
+- **HStack** - Horizontal stacking container  
+- **Spacer** - Flexible space that expands
+- **Divider** - Horizontal line separator  
+- **Panel** - Box container with optional border and title
+- **Group** - Logical grouping without visual representation
+- **EmptyView** - View that renders nothing
 
 ```swift
 // Vertical stack
@@ -211,10 +104,11 @@ VStack(alignment: .leading, spacing: 1) {
     Text("Line 2")
 }
 
-// Horizontal stack
+// Horizontal stack  
 HStack(spacing: 2) {
-    Badge("Status")
-    Text("Running")
+    Text("Left")
+    Spacer()
+    Text("Right")
 }
 
 // Panel with border
@@ -223,7 +117,10 @@ Panel(title: "Information") {
 }
 ```
 
-### Text Components
+### Text Components (2)
+
+- **Text** - Basic text with style modifiers
+- **List** - Display items in various list styles
 
 ```swift
 // Styled text
@@ -232,68 +129,99 @@ Text("Important")
     .background(.yellow)
     .bold()
     .underline()
+    
+// Lists with different styles
+List(items: listItems, style: .bulleted)  // • Item
+List(items: listItems, style: .numbered)  // 1. Item
+List(items: listItems, style: .checkbox)  // ☐ Item
 
-// Semantic notes
-Note("Success!", kind: .success)
-Note("Warning!", kind: .warning)
-Note("Error occurred", kind: .error)
-
-// Badges
-Badge("NEW").tint(.accent)
-Badge("BETA").tint(.warning)
-
-// Code blocks with syntax highlighting
-Code("""
-    func hello() {
-        print("World")
+// Nested lists
+List {
+    Text("Item 1")
+    List {
+        Text("Sub Item 1.1")
+        Text("Sub Item 1.2")
     }
-    """, language: .swift)
+    Text("Item 2")
+}
 ```
 
-### Progress Components
+### Data Components (2)
+
+- **Table** - Tabular data display with customizable columns
+- **Tree** - Hierarchical tree structure display
+
+```swift
+// Table with columns
+let columns = [
+    TableColumn(id: "name", title: "Name", width: .fixed(20)),
+    TableColumn(id: "status", title: "Status", width: .auto)
+]
+
+Table(columns: columns, rows: tableRows)
+
+// Tree structure
+let rootNode = TreeNode(
+    id: "root",
+    label: "Root",
+    icon: "📁",
+    children: [
+        TreeNode(id: "child1", label: "Child 1"),
+        TreeNode(id: "child2", label: "Child 2")
+    ]
+)
+
+Tree(root: rootNode, showLines: true)
+```
+
+### Progress Components (2)
+
+- **ProgressView** - Determinate/indeterminate progress bars
+- **Spinner** - Animated loading indicators
 
 ```swift
 // Determinate progress
 ProgressView(label: "Processing", value: 0.65)
 
 // Indeterminate progress
-ProgressView.spinning("Loading")
+ProgressView(label: "Loading", indeterminate: true)
 
 // Custom spinner styles
 Spinner("Connecting...")
-    .style(.dots)  // or .line, .arc, .bounce, .braille
-
-// Visual meter
-Meter(value: 0.8, width: 20)
-    .style(.blocks)
+    .style(.dots)  // ⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏
 ```
 
-### Data Components
+### Input Components (3)
+
+- **TextField** - Single-line text input
+- **Button** - Interactive button with keyboard shortcuts
+- **Selector** - Selection UI for multiple options with ForEach support
 
 ```swift
-// Tables
-Table(data: users) { user in
-    TableRow {
-        TableCell(user.name)
-        TableCell(user.email)
-        TableCell(user.status)
-    }
+// Text input field
+TextField(
+    label: "Username",
+    text: $username,
+    placeholder: "Enter username"
+)
+
+// Button with action and keyboard shortcut
+Button("Submit", shortcut: "s") {
+    // Handle action
 }
 
-// Key-value pairs
-KeyValue([
-    ("Name", "John Doe"),
-    ("Email", "john@example.com"),
-    ("Status", "Active")
-], alignment: .aligned(keyWidth: 10))
-
-// Lists
-List(items) { item in
-    Text("• \(item.title)")
+// Selector with ForEach
+let options = ["Option 1", "Option 2", "Option 3"]
+Selector($selectedOption) {
+    ForEach(options, id: \.self) { option in
+        Text(option)
+    }
 }
 ```
 
-### Data Iteration
+### Control Flow
+
+- **ForEach** - Iterate over collections with stable IDs
 
 ```swift
 // ForEach with Identifiable items
@@ -319,20 +247,51 @@ ForEach(0..<10) { index in
 
 ## Advanced Features
 
-### Animations
+### View Modifiers and Effects
 
 ```swift
-// Shimmer effect
+// Text style modifiers
+Text("Styled")
+    .foreground(.cyan)
+    .background(.blue)
+    .bold()
+    .italic()
+    .underline()
+    .dim()
+
+// Animation effects (via ViewModifiers)
 Text("Loading...")
     .shimmer(duration: 2.0)
 
-// Pulse animation
-Badge("LIVE")
-    .pulse(duration: 1.0)
-
-// Blink effect
 Text("Alert!")
     .blink(duration: 0.5)
+
+Text("Live")
+    .pulse(duration: 1.0)
+```
+
+### Live Rendering
+
+For dynamic updates without full screen refresh:
+
+```swift
+// Single element updates
+let renderer = LiveRenderer()
+await renderer.render(view)
+
+// Multiple elements with LiveSession
+let session = LiveSession()
+
+// Add/update elements at specific positions
+await session.update("header", at: Point(x: 0, y: 0), with: headerView)
+await session.update("content", at: Point(x: 0, y: 2), with: contentView)
+await session.update("footer", at: Point(x: 0, y: 10), with: footerView)
+
+// Remove element
+await session.remove("content")
+
+// Redraw all elements
+await session.redrawAll()
 ```
 
 ### Theming
@@ -341,13 +300,15 @@ Text("Alert!")
 // Use semantic colors
 Text("Success").foreground(.semantic(.success))
 Text("Error").foreground(.semantic(.error))
+Text("Warning").foreground(.semantic(.warning))
 
 // Custom themes
 let customTheme = Theme(
     accent: .cyan,
     success: .green,
     warning: .yellow,
-    error: .red
+    error: .red,
+    info: .blue
 )
 ```
 
@@ -367,7 +328,8 @@ VStack {
     case .success(let data):
         Text(data)
     case .error(let error):
-        Note(error.localizedDescription, kind: .error)
+        Text(error.localizedDescription)
+            .foreground(.red)
     }
 }
 ```
@@ -379,31 +341,34 @@ TerminalUI uses a virtual DOM-like approach with efficient reconciliation:
 1. **Declarative Views** → **Node Tree** → **Reconciliation** → **Render Commands** → **Terminal Output**
 
 Key concepts:
+- **NodeKind**: Enumeration of all component types (14 total)
 - **Address**: Hierarchical position (e.g., "vstack.text.0")
-- **LogicalID**: Stable identity for diffing
+- **LogicalID**: Stable identity for efficient diffing
 - **Reconciler**: Efficient tree diffing algorithm
 - **TerminalRuntime**: Central actor managing rendering
+- **PropertyContainer**: Type-safe property storage system
 
 ## Performance
 
-- Automatic frame rate limiting (default 15 FPS)
-- Efficient diff-based updates
+- Automatic frame rate limiting (default 15 FPS, configurable)
+- Efficient diff-based updates via Reconciler
 - Smart color degradation based on terminal capabilities
-- Memory-efficient node recycling
+- Memory-efficient with immutable value types
+- Sendable conformance for thread safety
 
 ## Requirements
 
-- Swift 5.9+
-- macOS 12.0+ / Linux
+- Swift 6.0+
+- macOS 15.0+ / Linux
 - Terminal with ANSI escape sequence support
+
+## Dependencies
+
+- [swift-distributed-tracing](https://github.com/apple/swift-distributed-tracing) (1.1.0+) - For optional tracing support
 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues and pull requests.
-
-## Author
-
-Created by [@1amageek](https://x.com/1amageek)
 
 ## License
 

@@ -170,7 +170,7 @@ final class ReconcilerTests: XCTestCase {
             address: "root",
             children: [
                 makeNode(address: "text1", kind: .text),
-                makeNode(address: "badge1", kind: .badge),
+                makeNode(address: "panel1", kind: .panel),
                 makeNode(address: "text2", kind: .text)
             ]
         )
@@ -179,8 +179,8 @@ final class ReconcilerTests: XCTestCase {
             address: "root",
             children: [
                 makeNode(address: "text1", kind: .text), // Same position, same kind
-                makeNode(address: "badge1", kind: .badge), // Same position, same kind
-                makeNode(address: "note1", kind: .note) // Same position, different kind
+                makeNode(address: "panel1", kind: .panel), // Same position, same kind
+                makeNode(address: "divider1", kind: .divider) // Same position, different kind
             ]
         )
         

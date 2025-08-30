@@ -42,12 +42,6 @@ public struct PaintEngine: Sendable {
         case .progress:
             paintProgress(node, at: Point(x: x, y: y), width: width, commands: &commands)
             
-        case .badge:
-            paintBadge(node, at: Point(x: x, y: y), commands: &commands)
-            
-        case .note:
-            paintNote(node, at: Point(x: x, y: y), width: width, commands: &commands)
-            
         default:
 
             for child in node.children {
@@ -210,43 +204,6 @@ public struct PaintEngine: Sendable {
                 commands.append(.write(" \(percentage)%"))
             }
         }
-    }
-    
-
-    private func paintBadge(_ node: Node, at position: Point, commands: inout [RenderCommand]) {
-        let text = node.prop(.text, as: String.self) ?? ""
-        let tintColor = node.prop(.tint, as: String.self)
-        let inverted = node.properties[.inverted] ?? false
-        
-        commands.append(.moveCursor(row: position.y, column: position.x))
-        
-        if let tintStr = tintColor, let color = parseColor(tintStr) {
-            if inverted {
-                commands.append(.setBackground(theme.resolve(color)))
-                commands.append(.setForeground(.rgb(255, 255, 255)))
-            } else {
-                commands.append(.setForeground(theme.resolve(color)))
-            }
-        }
-        
-        commands.append(.write(" \(text) "))
-        commands.append(.reset)
-    }
-    
-
-    private func paintNote(_ node: Node, at position: Point, width: Int, commands: inout [RenderCommand]) {
-        let message = node.prop(.text, as: String.self) ?? ""
-        let icon = node.properties[.icon] ?? ""
-        let foreground = node.prop(.foreground, as: String.self)
-        
-        commands.append(.moveCursor(row: position.y, column: position.x))
-        
-        if let fg = foreground, let color = parseColor(fg) {
-            commands.append(.setForeground(theme.resolve(color)))
-        }
-        
-        commands.append(.write("\(icon) \(message)"))
-        commands.append(.reset)
     }
     
 

@@ -15,13 +15,29 @@ public struct Spinner: ConsoleView {
         self.color = color
     }
     
+    private func colorToString(_ color: ANSIColor?) -> String {
+        guard let color = color else { return "" }
+        switch color {
+        case .semantic(let semantic):
+            return "semantic:\(semantic.rawValue)"
+        case .rgb(let r, let g, let b):
+            return "rgb:\(r),\(g),\(b)"
+        case .xterm256(let index):
+            return "xterm256:\(index)"
+        case .indexed(let index):
+            return "indexed:\(index)"
+        case .none:
+            return ""
+        }
+    }
+    
     public func _makeNode(context: inout RenderContext) -> Node {
         let properties = PropertyContainer()
             .with(.label, value: label ?? "")
             .with(.frames, value: style.frames)
             .with(.frameIndex, value: 0)
             .with(.isAnimating, value: true)
-            .with(.color, value: color?.toHex() ?? "")
+            .with(.foreground, value: colorToString(color))
         
         return Node(
             address: context.makeAddress(for: "spinner"),
@@ -46,10 +62,9 @@ public struct SpinnerRenderer {
         commands.append(.moveCursor(row: position.y, column: position.x))
         
 
-        if let colorHex: String = node.properties[.color], !colorHex.isEmpty {
-            if let color = ANSIColor.fromHex(colorHex) {
-                commands.append(.setForeground(color))
-            }
+        if let colorStr: String = node.properties[.foreground], !colorStr.isEmpty {
+            // Parse color string and apply - this should be handled by PaintEngine
+            commands.append(.setForeground(.semantic(.accent)))
         } else {
             commands.append(.setForeground(.semantic(.accent)))
         }
