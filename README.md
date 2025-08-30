@@ -5,6 +5,7 @@ A Swift library for building rich, interactive terminal user interfaces with a d
 ![Swift](https://img.shields.io/badge/Swift-6.0+-orange.svg)
 ![Platform](https://img.shields.io/badge/Platform-macOS%20|%20Linux-lightgray.svg)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/1amageek/TerminalUI)
 
 ## Features
 
