@@ -38,29 +38,69 @@ Then add it as a dependency to your target:
 
 ## Quick Start
 
+### Simple Text Output
+
 ```swift
 import TerminalUI
 
-// Simple text output
 Text("Hello, Terminal!")
     .foreground(.cyan)
     .bold()
+```
 
-// Progress bar
+**Output:**
+```
+Hello, Terminal!  // In cyan color with bold style
+```
+
+### Progress Bar
+
+```swift
 ProgressView(label: "Downloading", value: 0.7)
+```
 
-// Spinner animation
+**Output:**
+```
+Downloading [████████████████████████████░░░░░░░░░░░] 70%
+```
+
+### Spinner Animation
+
+```swift
 Spinner("Loading...")
     .style(.dots)
+```
 
-// Layout with VStack
+**Output:** (animated)
+```
+⠋ Loading...
+⠙ Loading...
+⠹ Loading...
+⠸ Loading...
+⠼ Loading...
+⠴ Loading...
+```
+
+### Layout with VStack
+
+```swift
 VStack {
     Text("Terminal UI").bold()
     Divider()
     Text("Build beautiful terminal interfaces")
 }
+```
 
-// Data display with ForEach
+**Output:**
+```
+Terminal UI        // Bold text
+────────────────   // Horizontal line
+Build beautiful terminal interfaces
+```
+
+### Data Display with ForEach
+
+```swift
 let items = ["Apple", "Banana", "Cherry"]
 VStack {
     Text("Fruits:").bold()
@@ -68,6 +108,14 @@ VStack {
         Text("• \(item)")
     }
 }
+```
+
+**Output:**
+```
+Fruits:    // Bold text
+• Apple
+• Banana
+• Cherry
 ```
 
 ## Component Library (14 Total Components)
@@ -88,18 +136,40 @@ VStack(alignment: .leading, spacing: 1) {
     Text("Line 1")
     Text("Line 2")
 }
+```
 
+**Output:**
+```
+Line 1
+Line 2
+```
+
+```swift
 // Horizontal stack  
 HStack(spacing: 2) {
     Text("Left")
     Spacer()
     Text("Right")
 }
+```
 
+**Output:**
+```
+Left  Right
+```
+
+```swift
 // Panel with border
 Panel(title: "Information") {
     Text("Panel content here")
 }
+```
+
+**Output:**
+```
+┌─ Information ─────────────┐
+│ Panel content here        │
+└───────────────────────────┘
 ```
 
 ### Text Components (2)
@@ -114,12 +184,33 @@ Text("Important")
     .background(.yellow)
     .bold()
     .underline()
-    
-// Lists with different styles
-List(items: listItems, style: .bulleted)  // • Item
-List(items: listItems, style: .numbered)  // 1. Item
-List(items: listItems, style: .checkbox)  // ☐ Item
+```
 
+**Output:**
+```
+Important  // Red text on yellow background, bold and underlined
+```
+
+```swift
+// Lists with different styles
+List(items: ["Apple", "Banana"], style: .bulleted)
+List(items: ["First", "Second"], style: .numbered)
+List(items: ["Task 1", "Task 2"], style: .checkbox)
+```
+
+**Output:**
+```
+• Apple
+• Banana
+
+1. First
+2. Second
+
+☐ Task 1
+☐ Task 2
+```
+
+```swift
 // Nested lists
 List {
     Text("Item 1")
@@ -129,6 +220,14 @@ List {
     }
     Text("Item 2")
 }
+```
+
+**Output:**
+```
+• Item 1
+  ◦ Sub Item 1.1
+  ◦ Sub Item 1.2
+• Item 2
 ```
 
 ### Data Components (2)
@@ -143,20 +242,48 @@ let columns = [
     TableColumn(id: "status", title: "Status", width: .auto)
 ]
 
-Table(columns: columns, rows: tableRows)
+let rows = [
+    ["name": "Service A", "status": "Running"],
+    ["name": "Service B", "status": "Stopped"]
+]
 
+Table(columns: columns, rows: rows)
+```
+
+**Output:**
+```
+┌────────────────────┬──────────┐
+│ Name               │ Status   │
+├────────────────────┼──────────┤
+│ Service A          │ Running  │
+│ Service B          │ Stopped  │
+└────────────────────┴──────────┘
+```
+
+```swift
 // Tree structure
 let rootNode = TreeNode(
     id: "root",
     label: "Root",
     icon: "📁",
     children: [
-        TreeNode(id: "child1", label: "Child 1"),
-        TreeNode(id: "child2", label: "Child 2")
+        TreeNode(id: "child1", label: "Child 1", icon: "📄"),
+        TreeNode(id: "child2", label: "Child 2", icon: "📁",
+            children: [
+                TreeNode(id: "grandchild", label: "Grandchild", icon: "📄")
+            ])
     ]
 )
 
 Tree(root: rootNode, showLines: true)
+```
+
+**Output:**
+```
+📁 Root
+├── 📄 Child 1
+└── 📁 Child 2
+    └── 📄 Grandchild
 ```
 
 ### Progress Components (2)
@@ -167,13 +294,41 @@ Tree(root: rootNode, showLines: true)
 ```swift
 // Determinate progress
 ProgressView(label: "Processing", value: 0.65)
+```
 
+**Output:**
+```
+Processing [██████████████████████████░░░░░░░░░░░░░░] 65%
+```
+
+```swift
 // Indeterminate progress
 ProgressView(label: "Loading", indeterminate: true)
+```
 
+**Output:** (animated)
+```
+Loading [░░░░░░████░░░░░░]  // Moving bar animation
+```
+
+```swift
 // Custom spinner styles
 Spinner("Connecting...")
-    .style(.dots)  // ⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏
+    .style(.dots)
+```
+
+**Output:** (animated)
+```
+⠋ Connecting...
+⠙ Connecting...
+⠹ Connecting...
+⠸ Connecting...
+⠼ Connecting...
+⠴ Connecting...
+⠦ Connecting...
+⠧ Connecting...
+⠇ Connecting...
+⠏ Connecting...
 ```
 
 ### Input Components (3)
@@ -189,12 +344,27 @@ TextField(
     text: $username,
     placeholder: "Enter username"
 )
+```
 
+**Output:**
+```
+Username: [Enter username                    ]
+          ↑ Cursor position (blinking)
+```
+
+```swift
 // Button with action and keyboard shortcut
 Button("Submit", shortcut: "s") {
     // Handle action
 }
+```
 
+**Output:**
+```
+[ Submit (s) ]  // Highlighted when focused
+```
+
+```swift
 // Selector with ForEach
 let options = ["Option 1", "Option 2", "Option 3"]
 Selector($selectedOption) {
@@ -202,6 +372,13 @@ Selector($selectedOption) {
         Text(option)
     }
 }
+```
+
+**Output:**
+```
+> Option 1    // Selected with arrow indicator
+  Option 2
+  Option 3
 ```
 
 ### Control Flow
@@ -215,19 +392,38 @@ struct Todo: Identifiable {
     let title: String
 }
 
-ForEach(todos) { todo in
-    Text(todo.title)
-}
+let todos = [
+    Todo(title: "Write documentation"),
+    Todo(title: "Fix bugs")
+]
 
-// ForEach with explicit ID
-ForEach(items, id: \.name) { item in
-    Text(item.name)
+VStack {
+    ForEach(todos) { todo in
+        Text("• \(todo.title)")
+    }
 }
+```
 
+**Output:**
+```
+• Write documentation
+• Fix bugs
+```
+
+```swift
 // ForEach with ranges
-ForEach(0..<10) { index in
-    Text("Item \(index)")
+VStack {
+    ForEach(0..<3) { index in
+        Text("Item \(index + 1)")
+    }
 }
+```
+
+**Output:**
+```
+Item 1
+Item 2
+Item 3
 ```
 
 ## Advanced Features
@@ -243,16 +439,32 @@ Text("Styled")
     .italic()
     .underline()
     .dim()
+```
 
+**Output:**
+```
+Styled  // Cyan text on blue background, bold, italic, underlined, dimmed
+```
+
+```swift
 // Animation effects (via ViewModifiers)
 Text("Loading...")
     .shimmer(duration: 2.0)
+```
 
+**Output:** (animated)
+```
+Loading...  // Shimmering effect moving across the text
+```
+
+```swift
 Text("Alert!")
     .blink(duration: 0.5)
+```
 
-Text("Live")
-    .pulse(duration: 1.0)
+**Output:** (animated)
+```
+Alert!  // Text appears and disappears every 0.5 seconds
 ```
 
 ### Live Rendering
@@ -283,23 +495,24 @@ await session.redrawAll()
 
 ```swift
 // Use semantic colors
-Text("Success").foreground(.semantic(.success))
-Text("Error").foreground(.semantic(.error))
-Text("Warning").foreground(.semantic(.warning))
+VStack {
+    Text("✓ Success").foreground(.semantic(.success))
+    Text("✗ Error").foreground(.semantic(.error))
+    Text("⚠ Warning").foreground(.semantic(.warning))
+}
+```
 
-// Custom themes
-let customTheme = Theme(
-    accent: .cyan,
-    success: .green,
-    warning: .yellow,
-    error: .red,
-    info: .blue
-)
+**Output:**
+```
+✓ Success   // Green text
+✗ Error     // Red text
+⚠ Warning   // Yellow text
 ```
 
 ### Conditional Rendering
 
 ```swift
+// Conditional rendering example
 VStack {
     if isLoggedIn {
         Text("Welcome back!")
@@ -307,16 +520,31 @@ VStack {
         Text("Please log in")
     }
     
+    Divider()
+    
     switch status {
     case .loading:
         Spinner("Loading...")
-    case .success(let data):
-        Text(data)
+    case .success(let message):
+        Text(message).foreground(.green)
     case .error(let error):
-        Text(error.localizedDescription)
-            .foreground(.red)
+        Text("Error: \(error)").foreground(.red)
     }
 }
+```
+
+**Output (when logged in and loading):**
+```
+Welcome back!
+────────────────
+⠋ Loading...
+```
+
+**Output (when not logged in with error):**
+```
+Please log in
+────────────────
+Error: Connection failed  // In red color
 ```
 
 ## Architecture
